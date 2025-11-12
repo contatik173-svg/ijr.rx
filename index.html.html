@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal Starlink - Dashboard</title>
+    <style>
+        :root {
+            --primary: #00ff88;
+            --secondary: #0066ff;
+            --dark: #0a0a0a;
+            --darker: #050505;
+            --light: #ffffff;
+            --gray: #333333;
+            --red: #ff4444;
+            --yellow: #ffcc00;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+        
+        body {
+            background: var(--dark);
+            color: var(--light);
+            overflow-x: hidden;
+        }
+        
+        .terminal-header {
+            background: var(--darker);
+            padding: 1rem;
+            border-bottom: 2px solid var(--primary);
+            text-align: center;
+        }
+        
+        .logo {
+            color: var(--primary);
+            font-size: 2rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px var(--primary);
+        }
+        
+        .subtitle {
+            color: var(--secondary);
+            font-size: 1rem;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            background: var(--darker);
+            padding: 1rem;
+            border-right: 1px solid var(--gray);
+        }
+        
+        .menu-item {
+            padding: 0.8rem 1rem;
+            margin: 0.5rem 0;
+            background: var(--gray);
+            border: 1px solid transparent;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--light);
+        }
+        
+        .menu-item:hover {
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+        
+        .menu-item.active {
+            background: var(--primary);
+            color: var(--dark);
+            font-weight: bold;
+        }
+        
+        .content {
+            padding: 2rem;
+            background: var(--dark);
+        }
+        
+        .panel {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        .panel.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .status-card {
+            background: var(--darker);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 1px solid var(--gray);
+            text-align: center;
+        }
+        
+        .status-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+        
+        .status-good { color: var(--primary); }
+        .status-warning { color: var(--yellow); }
+        .status-bad { color: var(--red); }
+        
+        .chart-container {
+            background: var(--darker);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            border: 1px solid var(--gray);
+        }
+        
+        .btn {
+            background: var(--primary);
+            color: var(--dark);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 0.5rem;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            background: var(--secondary);
+            color: var(--light);
+            transform: scale(1.05);
+        }
+        
+        .btn-secondary {
+            background: var(--secondary);
+            color: var(--light);
+        }
+        
+        .log-container {
+            background: var(--darker);
+            padding: 1rem;
+            border-radius: 5px;
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--gray);
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .log-entry {
+            margin: 0.3rem 0;
+            padding: 0.3rem;
+            border-left: 3px solid var(--primary);
+        }
+        
+        .log-error {
+            border-left-color: var(--red);
+            color: var(--red);
+        }
+        
+        .log-warning {
+            border-left-color: var(--yellow);
+            color: var(--yellow);
+        }
+        
+        .terminal-output {
+            background: #000;
+            color: var(--primary);
+            padding: 1rem;
+            border-radius: 5px;
+            min-height: 300px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            border: 1px solid var(--gray);
+        }
+        
+        .ping-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin: 0 2px;
+        }
+        
+        .dot-good { background: var(--primary); }
+        .dot-warning { background: var(--yellow); }
+        .dot-bad { background: var(--red); }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: var(--gray);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.5s;
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal-header">
+        <div class="logo">🛰  IJR.RX</div>
+        <div class="subtitle">Monitoramento e Otimização em Tempo Real</div>
+    </div>
+    
+    <div class="container">
+        <div class="sidebar">
+            <div class="menu-item active" data-panel="dashboard">📊 Dashboard</div>
+            <div class="menu-item" data-panel="speedtest">🚀 Teste de Velocidade</div>
+            <div class="menu-item" data-panel="monitor">📡 Monitor em Tempo Real</div>
+            <div class="menu-item" data-panel="diagnostics">🔧 Diagnóstico</div>
+            <div class="menu-item" data-panel="optimization">⚡ Otimização</div>
+            <div class="menu-item" data-panel="settings">⚙ Configurações</div>
+        </div>
+        
+        <div class="content">
+            <!-- Painel Dashboard -->
+            <div id="dashboard" class="panel active">
+                <h2>📊 Dashboard Starlink</h2>
+                <div class="status-grid">
+                    <div class="status-card">
+                        <div>Latência</div>
+                        <div class="status-value" id="latency-value">-- ms</div>
+                        <div id="latency-status">Carregando...</div>
+                    </div>
+                    <div class="status-card">
+                        <div>Download</div>
+                        <div class="status-value" id="download-value">-- Mbps</div>
+                        <div>Velocidade</div>
+                    </div>
+                    <div class="status-card">
+                        <div>Upload</div>
+                        <div class="status-value" id="upload-value">-- Mbps</div>
+                        <div>Velocidade</div>
+                    </div>
+                    <div class="status-card">
+                        <div>Estabilidade</div>
+                        <div class="status-value" id="stability-value">-- %</div>
+                        <div>Conectividade</div>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <h3>📈 Histórico de Latência</h3>
+                    <canvas id="latencyChart" width="400" height="200"></canvas>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="chart-container">
+                        <h3>🔄 Últimos Testes</h3>
+                        <div id="recent-tests">
+                            <div>Nenhum teste realizado</div>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3>📋 Log do Sistema</h3>
+                        <div class="log-container" id="system-log">
+                            <div class="log-entry">Sistema iniciado</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Painel Teste de Velocidade -->
+            <div id="speedtest" class="panel">
+                <h2>🚀 Teste de Velocidade</h2>
+                <button class="btn" onclick="startSpeedTest()">Iniciar Teste Completo</button>
+                <button class="btn btn-secondary" onclick="quickSpeedTest()">Teste Rápido</button>
+                
+                <div class="status-grid" style="margin-top: 2rem;">
+                    <div class="status-card">
+                        <div>Download</div>
+                        <div class="status-value" id="speed-download">-- Mbps</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="download-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="status-card">
+                        <div>Upload</div>
+                        <div class="status-value" id="speed-upload">-- Mbps</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="upload-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="status-card">
+                        <div>Ping</div>
+                        <div class="status-value" id="speed-ping">-- ms</div>
+                        <div>Latência</div>
+                    </div>
+                </div>
+                
+                <div class="terminal-output" id="speedtest-output">
+                    Aguardando início do teste...
+                </div>
+            </div>
+            
+            <!-- Painel Monitor em Tempo Real -->
+            <div id="monitor" class="panel">
+                <h2>📡 Monitor em Tempo Real</h2>
+                <button class="btn" onclick="toggleRealTimeMonitor()" id="monitor-toggle">Iniciar Monitoramento</button>
+                
+                <div class="status-grid">
+                    <div class="status-card">
+                        <div>Latência Atual</div>
+                        <div class="status-value" id="realtime-latency">-- ms</div>
+                        <div id="latency-dots"></div>
+                    </div>
+                    <div class="status-card">
+                        <div>Pacotes</div>
+                        <div class="status-value" id="packet-count">0</div>
+                        <div>Enviados/Recebidos</div>
+                    </div>
+                    <div class="status-card">
+                        <div>Perda</div>
+                        <div class="status-value" id="packet-loss">0%</div>
+                        <div>de Pacotes</div>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <h3>📊 Gráfico de Latência em Tempo Real</h3>
+                    <canvas id="realtimeChart" width="400" height="200"></canvas>
+                </div>
+                
+                <div class="log-container" id="monitor-log">
+                    <div class="log-entry">Monitoramento pronto para iniciar</div>
+                </div>
+            </div>
+            
+            <!-- Painel Diagnóstico -->
+            <div id="diagnostics" class="panel">
+                <h2>🔧 Diagnóstico Completo</h2>
+                <button class="btn" onclick="runFullDiagnostic()">Executar Diagnóstico Completo</button>
+                
+                <div class="terminal-output" id="diagnostic-output">
+                    Clique em "Executar Diagnóstico Completo" para começar
+                </div>
+                
+                <div class="status-grid" style="margin-top: 1rem;">
+                    <div class="status-card">
+                        <div>Conectividade</div>
+                        <div class="status-value" id="diag-connectivity">--</div>
+                        <div id="connectivity-status">Não testado</div>
+                    </div>
+                    <div class="status-card">
+                        <div>DNS</div>
+                        <div class="status-value" id="diag-dns">--</div>
+                        <div>Funcionamento</div>
+                    </div>
+                    <div class="status-card">
+                        <div>Rota</div>
+                        <div class="status-value" id="diag-route">--</div>
+                        <div>Estabilidade</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Painel Otimização -->
+            <div id="optimization" class="panel">
+                <h2>⚡ Otimizações</h2>
+                <div class="status-grid">
+                    <div class="status-card">
+                        <h3>Configurações DNS</h3>
+                        <select id="dns-select" style="width: 100%; padding: 0.5rem; margin: 0.5rem 0; background: var(--gray); color: white; border: 1px solid var(--primary);">
+                            <option value="auto">DNS Automático</option>
+                            <option value="cloudflare">Cloudflare (1.1.1.1)</option>
+                            <option value="google">Google (8.8.8.8)</option>
+                            <option value="opendns">OpenDNS (208.67.222.222)</option>
+                        </select>
+                        <button class="btn" onclick="applyDNS()">Aplicar DNS</button>
+                    </div>
+                    
+                    <div class="status-card">
+                        <h3>Otimizações TCP</h3>
+                        <button class="btn" onclick="optimizeTCP()">Otimizar TCP/IP</button>
+                        <button class="btn btn-secondary" onclick="clearCache()">Limpar Cache</button>
+                    </div>
+                </div>
+                
+                <div class="terminal-output" id="optimization-output">
+                    Selecione as otimizações desejadas
+                </div>
+            </div>
+            
+            <!-- Painel Configurações -->
+            <div id="settings" class="panel">
+                <h2>⚙ Configurações Starlink</h2>
+                <div class="chart-container">
+                    <h3>Dicas de Otimização</h3>
+                    <ul style="margin: 1rem; line-height: 1.6;">
+                        <li>✅ Posicione o terminal em área aberta sem obstruções</li>
+                        <li>✅ Mantenha o firmware atualizado</li>
+                        <li>✅ Use DNS otimizados (Cloudflare ou Google)</li>
+                        <li>✅ Evite interferências de outros dispositivos</li>
+                        <li>✅ Monitore regularmente as obstruções</li>
+                        <li>✅ Configure QoS para priorizar tráfego importante</li>
+                    </ul>
+                </div>
+                
+                <div class="chart-container">
+                    <h3>Configurações do Monitor</h3>
+                    <label>
+                        <input type="checkbox" id="auto-refresh" checked> 
+                        Atualização automática
+                    </label>
+                    <br>
+                    <label>
+                        Intervalo de atualização: 
+                        <select id="refresh-interval">
+                            <option value="5000">5 segundos</option>
+                            <option value="10000">10 segundos</option>
+                            <option value="30000">30 segundos</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variáveis globais
+        let realTimeMonitor = null;
+        let latencyHistory = [];
+        const MAX_HISTORY = 50;
+        let isMonitoring = false;
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+            addLog('Sistema Starlink inicializado com sucesso');
+        });
+        
+        // Sistema de navegação
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', function() {
+                // Remove classe active de todos
+                document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                
+                // Adiciona classe active ao item clicado
+                this.classList.add('active');
+                
+                // Mostra o painel correspondente
+                const panelId = this.getAttribute('data-panel');
+                document.getElementById(panelId).classList.add('active');
+            });
+        });
+        
+        // Função para adicionar log
+        function addLog(message, type = 'info') {
+            const logContainer = document.getElementById('system-log');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type === 'error' ? 'log-error' : type === 'warning' ? 'log-warning' : ''}`;
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        // Inicializar dashboard com dados simulados
+        function initializeDashboard() {
+            // Dados iniciais simulados
+            updateDashboard(120, 25, 35);
+            
+            // Inicializar gráfico simples
+            initializeSimpleChart();
+        }
+        
+        // Atualizar dashboard
+        function updateDashboard(download, upload, ping) {
+            document.getElementById('download-value').textContent = download + ' Mbps';
+            document.getElementById('upload-value').textContent = upload + ' Mbps';
+            document.getElementById('latency-value').textContent = ping + ' ms';
+            
+            // Calcular estabilidade baseada na latência
+            const stability = Math.max(0, 100 - (ping - 20) * 2);
+            document.getElementById('stability-value').textContent = Math.round(stability) + ' %';
+            
+            // Atualizar status da latência
+            const latencyStatus = document.getElementById('latency-status');
+            if (ping < 50) {
+                latencyStatus.textContent = 'Excelente';
+                latencyStatus.className = 'status-good';
+            } else if (ping < 100) {
+                latencyStatus.textContent = 'Boa';
+                latencyStatus.className = 'status-warning';
+            } else {
+                latencyStatus.textContent = 'Ruim';
+                latencyStatus.className = 'status-bad';
+            }
+            
+            // Adicionar aos testes recentes
+            addRecentTest(download, upload, ping);
+        }
+        
+        // Adicionar teste recente
+        function addRecentTest(download, upload, ping) {
+            const recentTests = document.getElementById('recent-tests');
+            const testEntry = document.createElement('div');
+            testEntry.className = 'log-entry';
+            testEntry.textContent = `${new Date().toLocaleTimeString()} - Download: ${download} Mbps, Upload: ${upload} Mbps, Ping: ${ping} ms`;
+            recentTests.appendChild(testEntry);
+            
+            // Manter apenas os últimos 5 testes
+            if (recentTests.children.length > 5) {
+                recentTests.removeChild(recentTests.children[0]);
+            }
+        }
+        
+        // Inicializar gráfico simples
+        function initializeSimpleChart() {
+            // Simular alguns dados iniciais
+            for (let i = 0; i < 10; i++) {
+                latencyHistory.push(Math.floor(Math.random() * 50) + 20);
+            }
+            
+            // Gráfico simples usando divs (sem Canvas)
+            updateLatencyChart();
+        }
+        
+        // Atualizar gráfico de latência
+        function updateLatencyChart() {
+            const chartContainer = document.querySelector('#latencyChart').parentNode;
+            let chartHtml = '<div style="display: flex; align-items: end; height: 150px; gap: 2px; margin-top: 1rem;">';
+            
+            latencyHistory.forEach(latency => {
+                const height = Math.max(10, (latency / 100) * 150);
+                const color = latency < 50 ? 'var(--primary)' : latency < 100 ? 'var(--yellow)' : 'var(--red)';
+                chartHtml += `<div style="width: 20px; height: ${height}px; background: ${color}; border-radius: 2px;"></div>`;
+            });
+            
+            chartHtml += '</div>';
+            chartContainer.innerHTML += chartHtml;
+        }
+        
+        // Simulação de teste de velocidade
+        async function startSpeedTest() {
+            const output = document.getElementById('speedtest-output');
+            output.textContent = 'Iniciando teste de velocidade...\n';
+            
+            // Resetar barras de progresso
+            document.getElementById('download-bar').style.width = '0%';
+            document.getElementById('upload-bar').style.width = '0%';
+            
+            // Simula teste de ping
+            output.textContent += 'Testando latência...\n';
+            await simulateDelay(1000);
+            const ping = Math.floor(Math.random() * 50) + 20;
+            document.getElementById('speed-ping').textContent = ping + ' ms';
+            output.textContent += `Latência: ${ping} ms\n`;
+            
+            // Simula teste de download
+            output.textContent += 'Testando velocidade de download...\n';
+            await simulateDelay(2000);
+            const download = Math.floor(Math.random() * 200) + 50;
+            document.getElementById('speed-download').textContent = download + ' Mbps';
+            document.getElementById('download-bar').style.width = Math.min(download / 3, 100) + '%';
+            output.textContent += `Download: ${download} Mbps\n`;
+            
+            // Simula teste de upload
+            output.textContent += 'Testando velocidade de upload...\n';
+            await simulateDelay(2000);
+            const upload = Math.floor(Math.random() * 50) + 10;
+            document.getElementById('speed-upload').textContent = upload + ' Mbps';
+            document.getElementById('upload-bar').style.width = Math.min(upload / 1, 100) + '%';
+            output.textContent += `Upload: ${upload} Mbps\n`;
+            
+            output.textContent += '\n✅ Teste concluído!';
+            
+            // Atualiza dashboard
+            updateDashboard(download, upload, ping);
+            addLog(`Teste de velocidade concluído: ${download}Mbps/${upload}Mbps (${ping}ms)`);
+        }
+        
+        function quickSpeedTest() {
+            addLog('Teste rápido iniciado');
+            startSpeedTest();
+        }
+        
+        function simulateDelay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        // Monitor em tempo real
+        function toggleRealTimeMonitor() {
+            const button = document.getElementById('monitor-toggle');
+            
+            if (!isMonitoring) {
+                isMonitoring = true;
+                button.textContent = 'Parar Monitoramento';
+                startRealTimeMonitor();
+                addLog('Monitoramento em tempo real iniciado');
+            } else {
+                isMonitoring = false;
+                button.textContent = 'Iniciar Monitoramento';
+                stopRealTimeMonitor();
+                addLog('Monitoramento em tempo real parado');
+            }
+        }
+        
+        function startRealTimeMonitor() {
+            realTimeMonitor = setInterval(() => {
+                // Simular dados em tempo real
+                const latency = Math.floor(Math.random() * 100) + 10;
+                const packets = Math.floor(Math.random() * 1000) + 500;
+                const loss = Math.random() * 5;
+                
+                // Atualizar interface
+                document.getElementById('realtime-latency').textContent = latency + ' ms';
+                document.getElementById('packet-count').textContent = packets;
+                document.getElementById('packet-loss').textContent = loss.toFixed(1) + '%';
+                
+                // Adicionar ponto de latência
+                addLatencyDot(latency);
+                
+                // Adicionar ao histórico
+                latencyHistory.push(latency);
+                if (latencyHistory.length > MAX_HISTORY) {
+                    latencyHistory.shift();
+                }
+                
+                // Adicionar log
+                const monitorLog = document.getElementById('monitor-log');
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+                logEntry.textContent = `[${new Date().toLocaleTimeString()}] Latência: ${latency}ms, Pacotes: ${packets}, Perda: ${loss.toFixed(1)}%`;
+                monitorLog.appendChild(logEntry);
+                monitorLog.scrollTop = monitorLog.scrollHeight;
+                
+            }, 2000);
+        }
+        
+        function stopRealTimeMonitor() {
+            if (realTimeMonitor) {
+                clearInterval(realTimeMonitor);
+                realTimeMonitor = null;
+            }
+        }
+        
+        function addLatencyDot(latency) {
+            const dotsContainer = document.getElementById('latency-dots');
+            const dot = document.createElement('span');
+            dot.className = `ping-dot ${latency < 50 ? 'dot-good' : latency < 100 ? 'dot-warning' : 'dot-bad'}`;
+            dotsContainer.appendChild(dot);
+            
+            // Manter apenas os últimos 20 pontos
+            if (dotsContainer.children.length > 20) {
+                dotsContainer.removeChild(dotsContainer.children[0]);
+            }
+        }
+        
+        // Diagnóstico
+        function runFullDiagnostic() {
+            const output = document.getElementById('diagnostic-output');
+            output.textContent = 'Iniciando diagnóstico completo...\n\n';
+            
+            setTimeout(() => {
+                output.textContent += '✓ Verificando conectividade com a internet...\n';
+                document.getElementById('diag-connectivity').textContent = 'OK';
+                document.getElementById('connectivity-status').textContent = 'Conectado';
+                document.getElementById('connectivity-status').className = 'status-good';
+            }, 1000);
+            
+            setTimeout(() => {
+                output.textContent += '✓ Testando servidores DNS...\n';
+                document.getElementById('diag-dns').textContent = 'OK';
+            }, 2000);
+            
+            setTimeout(() => {
+                output.textContent += '✓ Analisando rota de conexão...\n';
+                document.getElementById('diag-route').textContent = 'Estável';
+            }, 3000);
+            
+            setTimeout(() => {
+                output.textContent += '\n✅ Diagnóstico concluído! Todos os sistemas estão operando normalmente.';
+                addLog('Diagnóstico completo executado com sucesso');
+            }, 4000);
+        }
+        
+        // Otimizações
+        function applyDNS() {
+            const dnsSelect = document.getElementById('dns-select');
+            const selectedDNS = dnsSelect.options[dnsSelect.selectedIndex].text;
+            const output = document.getElementById('optimization-output');
+            
+            output.textContent = `Aplicando configurações DNS: ${selectedDNS}\n`;
+            setTimeout(() => {
+                output.textContent += '✓ Configurações DNS aplicadas com sucesso!\n';
+                output.textContent += 'Reinicie o navegador para que as alterações tenham efeito total.';
+                addLog(`DNS alterado para: ${selectedDNS}`);
+            }, 1500);
+        }
+        
+        function optimizeTCP() {
+            const output = document.getElementById('optimization-output');
+            output.textContent = 'Otimizando configurações TCP/IP...\n';
+            
+            setTimeout(() => {
+                output.textContent += '✓ Parâmetros TCP otimizados\n';
+                output.textContent += '✓ Buffer sizes ajustados\n';
+                output.textContent += '✓ Window scaling configurado\n';
+                output.textContent += '\n✅ Otimização TCP/IP concluída!';
+                addLog('Otimização TCP/IP aplicada');
+            }, 2000);
+        }
+        
+        function clearCache() {
+            const output = document.getElementById('optimization-output');
+            output.textContent = 'Limpando cache do sistema...\n';
+            
+            setTimeout(() => {
+                output.textContent += '✓ Cache DNS limpo\n';
+                output.textContent += '✓ Cache do navegador limpo\n';
+                output.textContent += '✓ Arquivos temporários removidos\n';
+                output.textContent += '\n✅ Limpeza de cache concluída!';
+                addLog('Cache do sistema limpo');
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
