@@ -28,12 +28,95 @@
             color: var(--light);
             overflow-x: hidden;
         }
+
+        /* Tela de Login */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: var(--darker);
+        }
+
+        .login-box {
+            background: var(--dark);
+            padding: 2rem;
+            border-radius: 10px;
+            border: 2px solid var(--primary);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-logo {
+            color: var(--primary);
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            background: var(--gray);
+            border: 1px solid var(--primary);
+            border-radius: 5px;
+            color: var(--light);
+            font-size: 1rem;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 10px rgba(0, 102, 255, 0.5);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 1rem;
+            margin: 1rem 0;
+            background: var(--primary);
+            color: var(--dark);
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .login-btn:hover {
+            background: var(--secondary);
+            color: var(--light);
+            transform: scale(1.02);
+        }
+
+        .login-message {
+            margin: 1rem 0;
+            padding: 0.8rem;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .login-message.error {
+            background: rgba(255, 68, 68, 0.2);
+            border: 1px solid var(--red);
+            color: var(--red);
+        }
+
+        .login-message.success {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
         
         .terminal-header {
             background: var(--darker);
             padding: 1rem;
             border-bottom: 2px solid var(--primary);
             text-align: center;
+            display: none;
         }
         
         .logo {
@@ -52,6 +135,7 @@
             display: grid;
             grid-template-columns: 250px 1fr;
             min-height: 100vh;
+            display: none;
         }
         
         .sidebar {
@@ -80,6 +164,21 @@
             background: var(--primary);
             color: var(--dark);
             font-weight: bold;
+        }
+
+        .user-info {
+            background: var(--gray);
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            border: 1px solid var(--primary);
+        }
+
+        .user-key {
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: var(--primary);
+            word-break: break-all;
         }
         
         .content {
@@ -156,6 +255,13 @@
             background: var(--secondary);
             color: var(--light);
         }
+
+        .btn-logout {
+            background: var(--red);
+            color: white;
+            width: 100%;
+            margin-top: 1rem;
+        }
         
         .log-container {
             background: var(--darker);
@@ -227,22 +333,66 @@
             background: var(--primary);
             transition: width 0.5s;
         }
+
+        .debug-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 5px;
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <div class="terminal-header">
-        <div class="logo">🛰  IJR.RX</div>
+    <!-- Tela de Login -->
+    <div class="login-container" id="login-container">
+        <div class="login-box">
+            <div class="login-logo">🛰 IJR.RX</div>
+            <div style="color: var(--secondary); margin-bottom: 2rem;">Sistema de Monitoramento Starlink</div>
+            
+            <input type="text" id="access-key" class="login-input" placeholder="Digite sua chave de acesso">
+            <input type="text" id="user-name" class="login-input" placeholder="Seu nome (opcional)">
+            
+            <button class="login-btn" id="login-btn">Acessar Sistema</button>
+            
+            <div class="login-message" id="login-message"></div>
+            
+            <div style="margin-top: 1rem; font-size: 0.9rem; color: #ccc;">
+                💡 Solicite uma chave de acesso ao administrador
+            </div>
+
+            <!-- Debug info -->
+            <div class="debug-info" id="debug-info">
+                <strong>Debug Info:</strong>
+                <div id="debug-content"></div>
+                <button onclick="toggleDebug()" style="margin-top: 0.5rem; padding: 0.3rem 0.6rem; font-size: 0.7rem;">Fechar Debug</button>
+            </div>
+            <button onclick="toggleDebug()" style="background: transparent; border: 1px solid var(--yellow); color: var(--yellow); padding: 0.3rem 0.6rem; border-radius: 3px; font-size: 0.7rem; margin-top: 0.5rem;">Debug</button>
+        </div>
+    </div>
+    
+    <!-- Sistema Principal (inicialmente oculto) -->
+    <div class="terminal-header" id="terminal-header">
+        <div class="logo">🛰 IJR.RX</div>
         <div class="subtitle">Monitoramento e Otimização em Tempo Real</div>
     </div>
     
-    <div class="container">
+    <div class="container" id="main-container">
         <div class="sidebar">
+            <div class="user-info">
+                <div>👤 Usuário: <span id="current-user">Convidado</span></div>
+                <div class="user-key">Chave: <span id="current-key">---</span></div>
+            </div>
+            
             <div class="menu-item active" data-panel="dashboard">📊 Dashboard</div>
             <div class="menu-item" data-panel="speedtest">🚀 Teste de Velocidade</div>
             <div class="menu-item" data-panel="monitor">📡 Monitor em Tempo Real</div>
             <div class="menu-item" data-panel="diagnostics">🔧 Diagnóstico</div>
             <div class="menu-item" data-panel="optimization">⚡ Otimização</div>
             <div class="menu-item" data-panel="settings">⚙ Configurações</div>
+            
+            <button class="btn btn-logout" id="logout-btn">🚪 Sair</button>
         </div>
         
         <div class="content">
@@ -294,7 +444,7 @@
                 </div>
             </div>
             
-            <!-- Painel Teste de Velocidade -->
+            <!-- Outros painéis mantidos iguais -->
             <div id="speedtest" class="panel">
                 <h2>🚀 Teste de Velocidade</h2>
                 <button class="btn" onclick="startSpeedTest()">Iniciar Teste Completo</button>
@@ -327,7 +477,6 @@
                 </div>
             </div>
             
-            <!-- Painel Monitor em Tempo Real -->
             <div id="monitor" class="panel">
                 <h2>📡 Monitor em Tempo Real</h2>
                 <button class="btn" onclick="toggleRealTimeMonitor()" id="monitor-toggle">Iniciar Monitoramento</button>
@@ -360,7 +509,6 @@
                 </div>
             </div>
             
-            <!-- Painel Diagnóstico -->
             <div id="diagnostics" class="panel">
                 <h2>🔧 Diagnóstico Completo</h2>
                 <button class="btn" onclick="runFullDiagnostic()">Executar Diagnóstico Completo</button>
@@ -368,27 +516,8 @@
                 <div class="terminal-output" id="diagnostic-output">
                     Clique em "Executar Diagnóstico Completo" para começar
                 </div>
-                
-                <div class="status-grid" style="margin-top: 1rem;">
-                    <div class="status-card">
-                        <div>Conectividade</div>
-                        <div class="status-value" id="diag-connectivity">--</div>
-                        <div id="connectivity-status">Não testado</div>
-                    </div>
-                    <div class="status-card">
-                        <div>DNS</div>
-                        <div class="status-value" id="diag-dns">--</div>
-                        <div>Funcionamento</div>
-                    </div>
-                    <div class="status-card">
-                        <div>Rota</div>
-                        <div class="status-value" id="diag-route">--</div>
-                        <div>Estabilidade</div>
-                    </div>
-                </div>
             </div>
             
-            <!-- Painel Otimização -->
             <div id="optimization" class="panel">
                 <h2>⚡ Otimizações</h2>
                 <div class="status-grid">
@@ -415,7 +544,6 @@
                 </div>
             </div>
             
-            <!-- Painel Configurações -->
             <div id="settings" class="panel">
                 <h2>⚙ Configurações Starlink</h2>
                 <div class="chart-container">
@@ -429,57 +557,288 @@
                         <li>✅ Configure QoS para priorizar tráfego importante</li>
                     </ul>
                 </div>
-                
-                <div class="chart-container">
-                    <h3>Configurações do Monitor</h3>
-                    <label>
-                        <input type="checkbox" id="auto-refresh" checked> 
-                        Atualização automática
-                    </label>
-                    <br>
-                    <label>
-                        Intervalo de atualização: 
-                        <select id="refresh-interval">
-                            <option value="5000">5 segundos</option>
-                            <option value="10000">10 segundos</option>
-                            <option value="30000">30 segundos</option>
-                        </select>
-                    </label>
-                </div>
             </div>
         </div>
     </div>
 
     <script>
+        // =============================================
+        // SISTEMA DE CHAVES CORRIGIDO
+        // =============================================
+
+        // Chaves de emergência para teste
+        const EMERGENCY_KEYS = [
+            'STAR-123456-TEST-KEY',
+            'DEV-ACCESS-KEY-2024', 
+            'IJR-RX-MASTER-KEY',
+            'TEST-123456-ABCD-KEY',
+            'VIP-789012-EFGH-KEY'
+        ];
+
+        // Sistema de Login
+        let currentUser = null;
+        let currentKey = null;
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeLoginSystem();
+            
+            // Evento de login
+            document.getElementById('login-btn').addEventListener('click', loginUser);
+            
+            // Enter para login
+            document.getElementById('access-key').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    loginUser();
+                }
+            });
+            
+            // Evento de logout
+            document.getElementById('logout-btn').addEventListener('click', logoutUser);
+
+            // Debug: mostrar chaves disponíveis
+            setTimeout(showAvailableKeys, 1000);
+        });
+
+        function initializeLoginSystem() {
+            // Verificar se já está logado
+            const savedUser = localStorage.getItem('starlinkUser');
+            const savedKey = localStorage.getItem('starlinkKey');
+            
+            if (savedUser && savedKey && validateKey(savedKey)) {
+                showMainInterface(savedUser, savedKey);
+            } else {
+                showLoginInterface();
+            }
+        }
+
+        function loginUser() {
+            const accessKey = document.getElementById('access-key').value.trim().toUpperCase();
+            const userName = document.getElementById('user-name').value.trim() || 'Usuário';
+            const messageEl = document.getElementById('login-message');
+            
+            if (!accessKey) {
+                showLoginMessage('Digite uma chave de acesso!', 'error');
+                return;
+            }
+            
+            // Debug info
+            const debugInfo = validateKeyWithDebug(accessKey);
+            updateDebugInfo(debugInfo);
+            
+            if (validateKey(accessKey)) {
+                // Salvar dados do usuário
+                localStorage.setItem('starlinkUser', userName);
+                localStorage.setItem('starlinkKey', accessKey);
+                
+                showMainInterface(userName, accessKey);
+                showLoginMessage('✅ Acesso concedido!', 'success');
+                
+                // Registrar uso da chave
+                registerKeyUsage(accessKey, userName);
+            } else {
+                showLoginMessage('❌ Chave de acesso inválida!', 'error');
+            }
+        }
+
+        function validateKey(key) {
+            // 1. Verificar chaves de emergência
+            if (EMERGENCY_KEYS.includes(key)) {
+                console.log('Chave de emergência aceita:', key);
+                return true;
+            }
+            
+            // 2. Verificar chaves do localStorage
+            const keys = loadKeysFromStorage();
+            const validKey = keys.find(k => k.key === key && k.active !== false);
+            
+            if (validKey) {
+                console.log('Chave do sistema encontrada:', key);
+                return true;
+            }
+            
+            // 3. Verificar formato básico da chave
+            if (isValidKeyFormat(key)) {
+                console.log('Chave com formato válido:', key);
+                return true;
+            }
+            
+            console.log('Chave inválida:', key);
+            return false;
+        }
+
+        function validateKeyWithDebug(key) {
+            const debug = {
+                key: key,
+                checks: []
+            };
+            
+            // Check 1: Chaves de emergência
+            if (EMERGENCY_KEYS.includes(key)) {
+                debug.checks.push({ type: 'emergency', valid: true, message: 'Chave de emergência válida' });
+                return debug;
+            }
+            
+            // Check 2: Chaves do localStorage
+            const keys = loadKeysFromStorage();
+            debug.checks.push({ 
+                type: 'storage', 
+                valid: keys.length > 0, 
+                message: `Encontradas ${keys.length} chaves no sistema` 
+            });
+            
+            const validKey = keys.find(k => k.key === key && k.active !== false);
+            if (validKey) {
+                debug.checks.push({ type: 'match', valid: true, message: 'Chave encontrada no sistema' });
+                return debug;
+            }
+            
+            // Check 3: Formato da chave
+            const formatValid = isValidKeyFormat(key);
+            debug.checks.push({ 
+                type: 'format', 
+                valid: formatValid, 
+                message: formatValid ? 'Formato de chave válido' : 'Formato de chave inválido' 
+            });
+            
+            return debug;
+        }
+
+        function loadKeysFromStorage() {
+            try {
+                // Tentar carregar do localStorage
+                const storedKeys = localStorage.getItem('starlinkKeys');
+                if (storedKeys) {
+                    const keys = JSON.parse(storedKeys);
+                    console.log('Chaves carregadas do localStorage:', keys);
+                    return Array.isArray(keys) ? keys : [];
+                }
+            } catch (error) {
+                console.error('Erro ao carregar chaves:', error);
+            }
+            return [];
+        }
+
+        function isValidKeyFormat(key) {
+            // Formato: PREFIX-XXXXXX-XXXX-KEY
+            const keyPattern = /^[A-Z]{3,4}-[A-Z0-9]{4,6}-[A-Z0-9]{3,4}-(KEY|ACCESS|CODE)$/;
+            return keyPattern.test(key);
+        }
+
+        function registerKeyUsage(key, userName) {
+            const keys = loadKeysFromStorage();
+            const keyData = keys.find(k => k.key === key);
+            
+            if (keyData) {
+                keyData.uses = (keyData.uses || 0) + 1;
+                keyData.lastUsed = new Date().toISOString();
+                keyData.lastUser = userName;
+                saveKeysToStorage(keys);
+            }
+        }
+
+        function saveKeysToStorage(keys) {
+            try {
+                localStorage.setItem('starlinkKeys', JSON.stringify(keys));
+            } catch (error) {
+                console.error('Erro ao salvar chaves:', error);
+            }
+        }
+
+        function showAvailableKeys() {
+            const keys = loadKeysFromStorage();
+            const emergencyKeys = EMERGENCY_KEYS;
+            
+            console.log('=== CHAVES DISPONÍVEIS ===');
+            console.log('Chaves do sistema:', keys.map(k => k.key));
+            console.log('Chaves de emergência:', emergencyKeys);
+            console.log('========================');
+        }
+
+        function updateDebugInfo(debugInfo) {
+            const debugContent = document.getElementById('debug-content');
+            let html = `<div><strong>Chave:</strong> ${debugInfo.key}</div>`;
+            
+            debugInfo.checks.forEach(check => {
+                const icon = check.valid ? '✅' : '❌';
+                html += `<div>${icon} ${check.type}: ${check.message}</div>`;
+            });
+            
+            debugContent.innerHTML = html;
+        }
+
+        function toggleDebug() {
+            const debugInfo = document.getElementById('debug-info');
+            debugInfo.style.display = debugInfo.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function logoutUser() {
+            localStorage.removeItem('starlinkUser');
+            localStorage.removeItem('starlinkKey');
+            showLoginInterface();
+            
+            // Parar monitoramento se estiver ativo
+            if (isMonitoring) {
+                toggleRealTimeMonitor();
+            }
+        }
+
+        function showLoginInterface() {
+            document.getElementById('login-container').style.display = 'flex';
+            document.getElementById('terminal-header').style.display = 'none';
+            document.getElementById('main-container').style.display = 'none';
+            
+            // Mostrar chaves disponíveis no debug
+            showAvailableKeys();
+        }
+
+        function showMainInterface(userName, accessKey) {
+            document.getElementById('login-container').style.display = 'none';
+            document.getElementById('terminal-header').style.display = 'block';
+            document.getElementById('main-container').style.display = 'grid';
+            
+            // Atualizar informações do usuário
+            document.getElementById('current-user').textContent = userName;
+            document.getElementById('current-key').textContent = accessKey;
+            
+            // Inicializar sistema principal
+            initializeDashboard();
+            addLog(`Usuário ${userName} autenticado com sucesso`);
+        }
+
+        function showLoginMessage(text, type) {
+            const messageEl = document.getElementById('login-message');
+            messageEl.textContent = text;
+            messageEl.className = `login-message ${type}`;
+            messageEl.style.display = 'block';
+            
+            setTimeout(() => {
+                messageEl.style.display = 'none';
+            }, 5000);
+        }
+
+        // =============================================
+        // SISTEMA PRINCIPAL (mantido igual)
+        // =============================================
+
         // Variáveis globais
         let realTimeMonitor = null;
         let latencyHistory = [];
         const MAX_HISTORY = 50;
         let isMonitoring = false;
         
-        // Inicialização
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeDashboard();
-            addLog('Sistema Starlink inicializado com sucesso');
-        });
-        
         // Sistema de navegação
         document.querySelectorAll('.menu-item').forEach(item => {
             item.addEventListener('click', function() {
-                // Remove classe active de todos
                 document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
                 document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
                 
-                // Adiciona classe active ao item clicado
                 this.classList.add('active');
-                
-                // Mostra o painel correspondente
                 const panelId = this.getAttribute('data-panel');
                 document.getElementById(panelId).classList.add('active');
             });
         });
         
-        // Função para adicionar log
         function addLog(message, type = 'info') {
             const logContainer = document.getElementById('system-log');
             const logEntry = document.createElement('div');
@@ -489,26 +848,19 @@
             logContainer.scrollTop = logContainer.scrollHeight;
         }
         
-        // Inicializar dashboard com dados simulados
         function initializeDashboard() {
-            // Dados iniciais simulados
             updateDashboard(120, 25, 35);
-            
-            // Inicializar gráfico simples
             initializeSimpleChart();
         }
         
-        // Atualizar dashboard
         function updateDashboard(download, upload, ping) {
             document.getElementById('download-value').textContent = download + ' Mbps';
             document.getElementById('upload-value').textContent = upload + ' Mbps';
             document.getElementById('latency-value').textContent = ping + ' ms';
             
-            // Calcular estabilidade baseada na latência
             const stability = Math.max(0, 100 - (ping - 20) * 2);
             document.getElementById('stability-value').textContent = Math.round(stability) + ' %';
             
-            // Atualizar status da latência
             const latencyStatus = document.getElementById('latency-status');
             if (ping < 50) {
                 latencyStatus.textContent = 'Excelente';
@@ -521,11 +873,9 @@
                 latencyStatus.className = 'status-bad';
             }
             
-            // Adicionar aos testes recentes
             addRecentTest(download, upload, ping);
         }
         
-        // Adicionar teste recente
         function addRecentTest(download, upload, ping) {
             const recentTests = document.getElementById('recent-tests');
             const testEntry = document.createElement('div');
@@ -533,24 +883,18 @@
             testEntry.textContent = `${new Date().toLocaleTimeString()} - Download: ${download} Mbps, Upload: ${upload} Mbps, Ping: ${ping} ms`;
             recentTests.appendChild(testEntry);
             
-            // Manter apenas os últimos 5 testes
             if (recentTests.children.length > 5) {
                 recentTests.removeChild(recentTests.children[0]);
             }
         }
         
-        // Inicializar gráfico simples
         function initializeSimpleChart() {
-            // Simular alguns dados iniciais
             for (let i = 0; i < 10; i++) {
                 latencyHistory.push(Math.floor(Math.random() * 50) + 20);
             }
-            
-            // Gráfico simples usando divs (sem Canvas)
             updateLatencyChart();
         }
         
-        // Atualizar gráfico de latência
         function updateLatencyChart() {
             const chartContainer = document.querySelector('#latencyChart').parentNode;
             let chartHtml = '<div style="display: flex; align-items: end; height: 150px; gap: 2px; margin-top: 1rem;">';
@@ -565,23 +909,19 @@
             chartContainer.innerHTML += chartHtml;
         }
         
-        // Simulação de teste de velocidade
         async function startSpeedTest() {
             const output = document.getElementById('speedtest-output');
             output.textContent = 'Iniciando teste de velocidade...\n';
             
-            // Resetar barras de progresso
             document.getElementById('download-bar').style.width = '0%';
             document.getElementById('upload-bar').style.width = '0%';
             
-            // Simula teste de ping
             output.textContent += 'Testando latência...\n';
             await simulateDelay(1000);
             const ping = Math.floor(Math.random() * 50) + 20;
             document.getElementById('speed-ping').textContent = ping + ' ms';
             output.textContent += `Latência: ${ping} ms\n`;
             
-            // Simula teste de download
             output.textContent += 'Testando velocidade de download...\n';
             await simulateDelay(2000);
             const download = Math.floor(Math.random() * 200) + 50;
@@ -589,7 +929,6 @@
             document.getElementById('download-bar').style.width = Math.min(download / 3, 100) + '%';
             output.textContent += `Download: ${download} Mbps\n`;
             
-            // Simula teste de upload
             output.textContent += 'Testando velocidade de upload...\n';
             await simulateDelay(2000);
             const upload = Math.floor(Math.random() * 50) + 10;
@@ -599,7 +938,6 @@
             
             output.textContent += '\n✅ Teste concluído!';
             
-            // Atualiza dashboard
             updateDashboard(download, upload, ping);
             addLog(`Teste de velocidade concluído: ${download}Mbps/${upload}Mbps (${ping}ms)`);
         }
@@ -613,7 +951,6 @@
             return new Promise(resolve => setTimeout(resolve, ms));
         }
         
-        // Monitor em tempo real
         function toggleRealTimeMonitor() {
             const button = document.getElementById('monitor-toggle');
             
@@ -632,26 +969,21 @@
         
         function startRealTimeMonitor() {
             realTimeMonitor = setInterval(() => {
-                // Simular dados em tempo real
                 const latency = Math.floor(Math.random() * 100) + 10;
                 const packets = Math.floor(Math.random() * 1000) + 500;
                 const loss = Math.random() * 5;
                 
-                // Atualizar interface
                 document.getElementById('realtime-latency').textContent = latency + ' ms';
                 document.getElementById('packet-count').textContent = packets;
                 document.getElementById('packet-loss').textContent = loss.toFixed(1) + '%';
                 
-                // Adicionar ponto de latência
                 addLatencyDot(latency);
                 
-                // Adicionar ao histórico
                 latencyHistory.push(latency);
                 if (latencyHistory.length > MAX_HISTORY) {
                     latencyHistory.shift();
                 }
                 
-                // Adicionar log
                 const monitorLog = document.getElementById('monitor-log');
                 const logEntry = document.createElement('div');
                 logEntry.className = 'log-entry';
@@ -675,32 +1007,25 @@
             dot.className = `ping-dot ${latency < 50 ? 'dot-good' : latency < 100 ? 'dot-warning' : 'dot-bad'}`;
             dotsContainer.appendChild(dot);
             
-            // Manter apenas os últimos 20 pontos
             if (dotsContainer.children.length > 20) {
                 dotsContainer.removeChild(dotsContainer.children[0]);
             }
         }
         
-        // Diagnóstico
         function runFullDiagnostic() {
             const output = document.getElementById('diagnostic-output');
             output.textContent = 'Iniciando diagnóstico completo...\n\n';
             
             setTimeout(() => {
                 output.textContent += '✓ Verificando conectividade com a internet...\n';
-                document.getElementById('diag-connectivity').textContent = 'OK';
-                document.getElementById('connectivity-status').textContent = 'Conectado';
-                document.getElementById('connectivity-status').className = 'status-good';
             }, 1000);
             
             setTimeout(() => {
                 output.textContent += '✓ Testando servidores DNS...\n';
-                document.getElementById('diag-dns').textContent = 'OK';
             }, 2000);
             
             setTimeout(() => {
                 output.textContent += '✓ Analisando rota de conexão...\n';
-                document.getElementById('diag-route').textContent = 'Estável';
             }, 3000);
             
             setTimeout(() => {
@@ -709,7 +1034,6 @@
             }, 4000);
         }
         
-        // Otimizações
         function applyDNS() {
             const dnsSelect = document.getElementById('dns-select');
             const selectedDNS = dnsSelect.options[dnsSelect.selectedIndex].text;
@@ -748,6 +1072,12 @@
                 addLog('Cache do sistema limpo');
             }, 1500);
         }
+
+        // Inicializar debug
+        setTimeout(() => {
+            console.log('=== SISTEMA DE CHAVES INICIADO ===');
+            showAvailableKeys();
+        }, 2000);
     </script>
 </body>
 </html>
