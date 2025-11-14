@@ -15,6 +15,7 @@
             --gray: #1e1e2e;
             --red: #ff2965;
             --yellow: #ffd700;
+            --green: #00ff88;
         }
         
         * {
@@ -139,10 +140,9 @@
         }
         
         .container {
-            display: grid;
+            display: none;
             grid-template-columns: 250px 1fr;
             min-height: 100vh;
-            display: none;
         }
         
         .sidebar {
@@ -188,6 +188,33 @@
             font-size: 0.9rem;
             color: var(--primary);
             word-break: break-all;
+        }
+
+        .key-status {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-left: 0.5rem;
+        }
+        
+        .status-active {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--green);
+            border: 1px solid var(--green);
+        }
+        
+        .status-inactive {
+            background: rgba(255, 41, 101, 0.2);
+            color: var(--red);
+            border: 1px solid var(--red);
+        }
+        
+        .status-expired {
+            background: rgba(255, 215, 0, 0.2);
+            color: var(--yellow);
+            border: 1px solid var(--yellow);
         }
         
         .content {
@@ -277,6 +304,19 @@
             color: white;
             width: 100%;
             margin-top: 1rem;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: 'Orbitron', monospace;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: #ff0040;
+            transform: scale(1.02);
+            box-shadow: 0 0 15px rgba(255, 41, 101, 0.4);
         }
         
         .log-container {
@@ -363,6 +403,12 @@
             font-family: 'Orbitron', monospace;
             color: var(--primary);
         }
+
+        .key-expiry {
+            font-size: 0.8rem;
+            color: var(--yellow);
+            margin-top: 0.3rem;
+        }
     </style>
 </head>
 <body>
@@ -380,7 +426,7 @@
             <div class="login-message" id="login-message"></div>
             
             <div style="margin-top: 1rem; font-size: 0.9rem; color: #ccc;">
-                💡 Solicite uma chave de acesso ao administrador mande menssagem no instagram : @ijr.rx ou mande menssagem no zap (91) 981970504 
+                💡 Solicite uma chave de acesso ao administrador: @ijr.rx ou (91) 981970504
             </div>
 
             <!-- Debug info -->
@@ -404,6 +450,8 @@
             <div class="user-info">
                 <div>👤 Usuário: <span id="current-user">Convidado</span></div>
                 <div class="user-key">Chave: <span id="current-key">---</span></div>
+                <div id="key-status-display"></div>
+                <div id="key-expiry-info" class="key-expiry"></div>
             </div>
             
             <div class="menu-item active" data-panel="dashboard">📊 Dashboard</div>
@@ -413,7 +461,7 @@
             <div class="menu-item" data-panel="optimization">⚡ Otimização</div>
             <div class="menu-item" data-panel="settings">⚙ Configurações</div>
             
-            <button class="btn btn-logout" id="logout-btn">🚪 Sair</button>
+            <button class="btn-logout" id="logout-btn">🚪 Sair do Sistema</button>
         </div>
         
         <div class="content">
@@ -465,7 +513,7 @@
                 </div>
             </div>
             
-            <!-- Outros painéis mantidos iguais -->
+            <!-- Outros painéis -->
             <div id="speedtest" class="panel">
                 <h2>🚀 Teste de Velocidade</h2>
                 <button class="btn" onclick="startSpeedTest()">Iniciar Teste Completo</button>
@@ -584,7 +632,7 @@
 
     <script>
         // =============================================
-        // SISTEMA DE CHAVES CORRIGIDO
+        // DECLARAÇÃO DE VARIÁVEIS GLOBAIS
         // =============================================
 
         // Chaves de emergência para teste
@@ -599,38 +647,30 @@
         // Sistema de Login
         let currentUser = null;
         let currentKey = null;
+        let currentKeyData = null;
+        let keyCheckInterval = null;
+        let realTimeMonitor = null;
+        let latencyHistory = [];
+        const MAX_HISTORY = 50;
+        let isMonitoring = false;
 
-        // Inicialização
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeLoginSystem();
-            
-            // Evento de login
-            document.getElementById('login-btn').addEventListener('click', loginUser);
-            
-            // Enter para login
-            document.getElementById('access-key').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    loginUser();
-                }
-            });
-            
-            // Evento de logout
-            document.getElementById('logout-btn').addEventListener('click', logoutUser);
-
-            // Debug: mostrar chaves disponíveis
-            setTimeout(showAvailableKeys, 1000);
-        });
+        // =============================================
+        // FUNÇÕES DO SISTEMA DE CHAVES
+        // =============================================
 
         function initializeLoginSystem() {
             // Verificar se já está logado
             const savedUser = localStorage.getItem('starlinkUser');
             const savedKey = localStorage.getItem('starlinkKey');
             
-            if (savedUser && savedKey && validateKey(savedKey)) {
-                showMainInterface(savedUser, savedKey);
-            } else {
-                showLoginInterface();
+            if (savedUser && savedKey) {
+                const validationResult = validateKey(savedKey);
+                if (validationResult.valid) {
+                    showMainInterface(savedUser, savedKey);
+                    return;
+                }
             }
+            showLoginInterface();
         }
 
         function loginUser() {
@@ -647,18 +687,24 @@
             const debugInfo = validateKeyWithDebug(accessKey);
             updateDebugInfo(debugInfo);
             
-            if (validateKey(accessKey)) {
+            const validationResult = validateKey(accessKey);
+            
+            if (validationResult.valid) {
                 // Salvar dados do usuário
                 localStorage.setItem('starlinkUser', userName);
                 localStorage.setItem('starlinkKey', accessKey);
                 
+                currentKeyData = validationResult.keyData;
                 showMainInterface(userName, accessKey);
                 showLoginMessage('✅ Acesso concedido!', 'success');
                 
                 // Registrar uso da chave
                 registerKeyUsage(accessKey, userName);
+                
+                // Iniciar verificação periódica da chave
+                startKeyValidationCheck();
             } else {
-                showLoginMessage('❌ Chave de acesso inválida!', 'error');
+                showLoginMessage(`❌ ${validationResult.message}`, 'error');
             }
         }
 
@@ -666,26 +712,66 @@
             // 1. Verificar chaves de emergência
             if (EMERGENCY_KEYS.includes(key)) {
                 console.log('Chave de emergência aceita:', key);
-                return true;
+                return {
+                    valid: true,
+                    keyData: {
+                        key: key,
+                        name: 'Chave de Emergência',
+                        active: true,
+                        expiration: null,
+                        duration: 0
+                    }
+                };
             }
             
             // 2. Verificar chaves do localStorage
             const keys = loadKeysFromStorage();
-            const validKey = keys.find(k => k.key === key && k.active !== false);
+            const validKey = keys.find(k => k.key === key);
             
             if (validKey) {
+                // Verificar se a chave está ativa
+                if (validKey.active === false) {
+                    return {
+                        valid: false,
+                        message: 'Chave desativada pelo administrador'
+                    };
+                }
+                
+                // Verificar se a chave expirou
+                if (validKey.expiration && new Date() > new Date(validKey.expiration)) {
+                    return {
+                        valid: false,
+                        message: 'Chave expirada'
+                    };
+                }
+                
                 console.log('Chave do sistema encontrada:', key);
-                return true;
+                return {
+                    valid: true,
+                    keyData: validKey
+                };
             }
             
             // 3. Verificar formato básico da chave
             if (isValidKeyFormat(key)) {
                 console.log('Chave com formato válido:', key);
-                return true;
+                return {
+                    valid: true,
+                    keyData: {
+                        key: key,
+                        name: 'Chave Temporária',
+                        active: true,
+                        expiration: null,
+                        duration: 0
+                    }
+                };
             }
             
             console.log('Chave inválida:', key);
-            return false;
+            return {
+                valid: false,
+                message: 'Chave de acesso inválida!'
+            };
         }
 
         function validateKeyWithDebug(key) {
@@ -708,9 +794,30 @@
                 message: `Encontradas ${keys.length} chaves no sistema` 
             });
             
-            const validKey = keys.find(k => k.key === key && k.active !== false);
+            const validKey = keys.find(k => k.key === key);
             if (validKey) {
-                debug.checks.push({ type: 'match', valid: true, message: 'Chave encontrada no sistema' });
+                debug.checks.push({ 
+                    type: 'match', 
+                    valid: true, 
+                    message: 'Chave encontrada no sistema' 
+                });
+                
+                if (validKey.active === false) {
+                    debug.checks.push({ 
+                        type: 'status', 
+                        valid: false, 
+                        message: 'Chave desativada' 
+                    });
+                }
+                
+                if (validKey.expiration && new Date() > new Date(validKey.expiration)) {
+                    debug.checks.push({ 
+                        type: 'expiration', 
+                        valid: false, 
+                        message: 'Chave expirada' 
+                    });
+                }
+                
                 return debug;
             }
             
@@ -727,11 +834,9 @@
 
         function loadKeysFromStorage() {
             try {
-                // Tentar carregar do localStorage
                 const storedKeys = localStorage.getItem('starlinkKeys');
                 if (storedKeys) {
                     const keys = JSON.parse(storedKeys);
-                    console.log('Chaves carregadas do localStorage:', keys);
                     return Array.isArray(keys) ? keys : [];
                 }
             } catch (error) {
@@ -741,7 +846,6 @@
         }
 
         function isValidKeyFormat(key) {
-            // Formato: PREFIX-XXXXXX-XXXX-KEY
             const keyPattern = /^[A-Z]{3,4}-[A-Z0-9]{4,6}-[A-Z0-9]{3,4}-(KEY|ACCESS|CODE)$/;
             return keyPattern.test(key);
         }
@@ -771,7 +875,7 @@
             const emergencyKeys = EMERGENCY_KEYS;
             
             console.log('=== CHAVES DISPONÍVEIS ===');
-            console.log('Chaves do sistema:', keys.map(k => k.key));
+            console.log('Chaves do sistema:', keys);
             console.log('Chaves de emergência:', emergencyKeys);
             console.log('========================');
         }
@@ -793,15 +897,88 @@
             debugInfo.style.display = debugInfo.style.display === 'none' ? 'block' : 'none';
         }
 
-        function logoutUser() {
-            localStorage.removeItem('starlinkUser');
-            localStorage.removeItem('starlinkKey');
-            showLoginInterface();
+        function startKeyValidationCheck() {
+            // Verificar a chave a cada 30 segundos
+            keyCheckInterval = setInterval(() => {
+                if (currentKey) {
+                    const validation = validateKey(currentKey);
+                    if (!validation.valid) {
+                        addLog('❌ Chave de acesso revogada ou expirada!', 'error');
+                        setTimeout(() => {
+                            logoutUser();
+                            alert('Sua chave de acesso foi revogada ou expirou. Entre em contato com o administrador.');
+                        }, 2000);
+                    } else {
+                        updateKeyStatusDisplay(validation.keyData);
+                    }
+                }
+            }, 30000);
+        }
+
+        function updateKeyStatusDisplay(keyData) {
+            const statusDisplay = document.getElementById('key-status-display');
+            const expiryInfo = document.getElementById('key-expiry-info');
             
-            // Parar monitoramento se estiver ativo
+            if (!statusDisplay) return;
+            
+            let statusText = '';
+            let statusClass = '';
+            let expiryText = '';
+            
+            if (keyData.active === false) {
+                statusText = 'DESATIVADA';
+                statusClass = 'status-inactive';
+            } else if (keyData.expiration && new Date() > new Date(keyData.expiration)) {
+                statusText = 'EXPIRADA';
+                statusClass = 'status-expired';
+            } else {
+                statusText = 'ATIVA';
+                statusClass = 'status-active';
+                
+                if (keyData.expiration) {
+                    const expDate = new Date(keyData.expiration);
+                    const now = new Date();
+                    const timeDiff = expDate - now;
+                    const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                    
+                    if (daysLeft > 0) {
+                        expiryText = `Expira em: ${expDate.toLocaleDateString('pt-BR')} (${daysLeft} dia${daysLeft > 1 ? 's' : ''})`;
+                    } else {
+                        expiryText = `Expirou em: ${expDate.toLocaleDateString('pt-BR')}`;
+                    }
+                } else if (keyData.duration === 0) {
+                    expiryText = 'Chave ilimitada';
+                }
+            }
+            
+            statusDisplay.innerHTML = `<span class="key-status ${statusClass}">${statusText}</span>`;
+            if (expiryInfo) {
+                expiryInfo.textContent = expiryText;
+            }
+        }
+
+        function logoutUser() {
+            console.log('Executando logout...');
+            
+            // Parar verificação de chave
+            if (keyCheckInterval) {
+                clearInterval(keyCheckInterval);
+                keyCheckInterval = null;
+            }
+            
+            // Parar monitoramento
             if (isMonitoring) {
                 toggleRealTimeMonitor();
             }
+            
+            // Limpar dados
+            localStorage.removeItem('starlinkUser');
+            localStorage.removeItem('starlinkKey');
+            currentUser = null;
+            currentKey = null;
+            currentKeyData = null;
+            
+            showLoginInterface();
         }
 
         function showLoginInterface() {
@@ -809,8 +986,10 @@
             document.getElementById('terminal-header').style.display = 'none';
             document.getElementById('main-container').style.display = 'none';
             
-            // Mostrar chaves disponíveis no debug
-            showAvailableKeys();
+            // Limpar campos
+            document.getElementById('access-key').value = '';
+            document.getElementById('user-name').value = '';
+            document.getElementById('login-message').style.display = 'none';
         }
 
         function showMainInterface(userName, accessKey) {
@@ -821,6 +1000,12 @@
             // Atualizar informações do usuário
             document.getElementById('current-user').textContent = userName;
             document.getElementById('current-key').textContent = accessKey;
+            
+            // Atualizar status da chave
+            updateKeyStatusDisplay(currentKeyData);
+            
+            currentUser = userName;
+            currentKey = accessKey;
             
             // Inicializar sistema principal
             initializeDashboard();
@@ -839,29 +1024,30 @@
         }
 
         // =============================================
-        // SISTEMA PRINCIPAL (mantido igual)
+        // SISTEMA PRINCIPAL
         // =============================================
 
-        // Variáveis globais
-        let realTimeMonitor = null;
-        let latencyHistory = [];
-        const MAX_HISTORY = 50;
-        let isMonitoring = false;
-        
-        // Sistema de navegação
-        document.querySelectorAll('.menu-item').forEach(item => {
-            item.addEventListener('click', function() {
-                document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
-                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-                
-                this.classList.add('active');
-                const panelId = this.getAttribute('data-panel');
-                document.getElementById(panelId).classList.add('active');
+        function initializeDashboard() {
+            updateDashboard(120, 25, 35);
+            initializeSimpleChart();
+            
+            // Configurar navegação
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+                    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                    
+                    this.classList.add('active');
+                    const panelId = this.getAttribute('data-panel');
+                    document.getElementById(panelId).classList.add('active');
+                });
             });
-        });
+        }
         
         function addLog(message, type = 'info') {
             const logContainer = document.getElementById('system-log');
+            if (!logContainer) return;
+            
             const logEntry = document.createElement('div');
             logEntry.className = `log-entry ${type === 'error' ? 'log-error' : type === 'warning' ? 'log-warning' : ''}`;
             logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
@@ -869,29 +1055,31 @@
             logContainer.scrollTop = logContainer.scrollHeight;
         }
         
-        function initializeDashboard() {
-            updateDashboard(120, 25, 35);
-            initializeSimpleChart();
-        }
-        
         function updateDashboard(download, upload, ping) {
-            document.getElementById('download-value').textContent = download + ' Mbps';
-            document.getElementById('upload-value').textContent = upload + ' Mbps';
-            document.getElementById('latency-value').textContent = ping + ' ms';
+            const latencyEl = document.getElementById('latency-value');
+            const downloadEl = document.getElementById('download-value');
+            const uploadEl = document.getElementById('upload-value');
+            const stabilityEl = document.getElementById('stability-value');
+            const latencyStatusEl = document.getElementById('latency-status');
+            
+            if (latencyEl) latencyEl.textContent = ping + ' ms';
+            if (downloadEl) downloadEl.textContent = download + ' Mbps';
+            if (uploadEl) uploadEl.textContent = upload + ' Mbps';
             
             const stability = Math.max(0, 100 - (ping - 20) * 2);
-            document.getElementById('stability-value').textContent = Math.round(stability) + ' %';
+            if (stabilityEl) stabilityEl.textContent = Math.round(stability) + ' %';
             
-            const latencyStatus = document.getElementById('latency-status');
-            if (ping < 50) {
-                latencyStatus.textContent = 'Excelente';
-                latencyStatus.className = 'status-good';
-            } else if (ping < 100) {
-                latencyStatus.textContent = 'Boa';
-                latencyStatus.className = 'status-warning';
-            } else {
-                latencyStatus.textContent = 'Ruim';
-                latencyStatus.className = 'status-bad';
+            if (latencyStatusEl) {
+                if (ping < 50) {
+                    latencyStatusEl.textContent = 'Excelente';
+                    latencyStatusEl.className = 'status-good';
+                } else if (ping < 100) {
+                    latencyStatusEl.textContent = 'Boa';
+                    latencyStatusEl.className = 'status-warning';
+                } else {
+                    latencyStatusEl.textContent = 'Ruim';
+                    latencyStatusEl.className = 'status-bad';
+                }
             }
             
             addRecentTest(download, upload, ping);
@@ -899,6 +1087,8 @@
         
         function addRecentTest(download, upload, ping) {
             const recentTests = document.getElementById('recent-tests');
+            if (!recentTests) return;
+            
             const testEntry = document.createElement('div');
             testEntry.className = 'log-entry';
             testEntry.textContent = `${new Date().toLocaleTimeString()} - Download: ${download} Mbps, Upload: ${upload} Mbps, Ping: ${ping} ms`;
@@ -917,7 +1107,10 @@
         }
         
         function updateLatencyChart() {
-            const chartContainer = document.querySelector('#latencyChart').parentNode;
+            const chartContainer = document.querySelector('#latencyChart');
+            if (!chartContainer) return;
+            
+            const parent = chartContainer.parentNode;
             let chartHtml = '<div style="display: flex; align-items: end; height: 150px; gap: 2px; margin-top: 1rem;">';
             
             latencyHistory.forEach(latency => {
@@ -927,34 +1120,41 @@
             });
             
             chartHtml += '</div>';
-            chartContainer.innerHTML += chartHtml;
+            parent.innerHTML += chartHtml;
         }
         
         async function startSpeedTest() {
             const output = document.getElementById('speedtest-output');
+            if (!output) return;
+            
             output.textContent = 'Iniciando teste de velocidade...\n';
             
-            document.getElementById('download-bar').style.width = '0%';
-            document.getElementById('upload-bar').style.width = '0%';
+            const downloadBar = document.getElementById('download-bar');
+            const uploadBar = document.getElementById('upload-bar');
+            if (downloadBar) downloadBar.style.width = '0%';
+            if (uploadBar) uploadBar.style.width = '0%';
             
             output.textContent += 'Testando latência...\n';
             await simulateDelay(1000);
             const ping = Math.floor(Math.random() * 50) + 20;
-            document.getElementById('speed-ping').textContent = ping + ' ms';
+            const pingEl = document.getElementById('speed-ping');
+            if (pingEl) pingEl.textContent = ping + ' ms';
             output.textContent += `Latência: ${ping} ms\n`;
             
             output.textContent += 'Testando velocidade de download...\n';
             await simulateDelay(2000);
             const download = Math.floor(Math.random() * 200) + 50;
-            document.getElementById('speed-download').textContent = download + ' Mbps';
-            document.getElementById('download-bar').style.width = Math.min(download / 3, 100) + '%';
+            const downloadEl = document.getElementById('speed-download');
+            if (downloadEl) downloadEl.textContent = download + ' Mbps';
+            if (downloadBar) downloadBar.style.width = Math.min(download / 3, 100) + '%';
             output.textContent += `Download: ${download} Mbps\n`;
             
             output.textContent += 'Testando velocidade de upload...\n';
             await simulateDelay(2000);
             const upload = Math.floor(Math.random() * 50) + 10;
-            document.getElementById('speed-upload').textContent = upload + ' Mbps';
-            document.getElementById('upload-bar').style.width = Math.min(upload / 1, 100) + '%';
+            const uploadEl = document.getElementById('speed-upload');
+            if (uploadEl) uploadEl.textContent = upload + ' Mbps';
+            if (uploadBar) uploadBar.style.width = Math.min(upload / 1, 100) + '%';
             output.textContent += `Upload: ${upload} Mbps\n`;
             
             output.textContent += '\n✅ Teste concluído!';
@@ -974,6 +1174,7 @@
         
         function toggleRealTimeMonitor() {
             const button = document.getElementById('monitor-toggle');
+            if (!button) return;
             
             if (!isMonitoring) {
                 isMonitoring = true;
@@ -994,9 +1195,13 @@
                 const packets = Math.floor(Math.random() * 1000) + 500;
                 const loss = Math.random() * 5;
                 
-                document.getElementById('realtime-latency').textContent = latency + ' ms';
-                document.getElementById('packet-count').textContent = packets;
-                document.getElementById('packet-loss').textContent = loss.toFixed(1) + '%';
+                const latencyEl = document.getElementById('realtime-latency');
+                const packetsEl = document.getElementById('packet-count');
+                const lossEl = document.getElementById('packet-loss');
+                
+                if (latencyEl) latencyEl.textContent = latency + ' ms';
+                if (packetsEl) packetsEl.textContent = packets;
+                if (lossEl) lossEl.textContent = loss.toFixed(1) + '%';
                 
                 addLatencyDot(latency);
                 
@@ -1006,11 +1211,13 @@
                 }
                 
                 const monitorLog = document.getElementById('monitor-log');
-                const logEntry = document.createElement('div');
-                logEntry.className = 'log-entry';
-                logEntry.textContent = `[${new Date().toLocaleTimeString()}] Latência: ${latency}ms, Pacotes: ${packets}, Perda: ${loss.toFixed(1)}%`;
-                monitorLog.appendChild(logEntry);
-                monitorLog.scrollTop = monitorLog.scrollHeight;
+                if (monitorLog) {
+                    const logEntry = document.createElement('div');
+                    logEntry.className = 'log-entry';
+                    logEntry.textContent = `[${new Date().toLocaleTimeString()}] Latência: ${latency}ms, Pacotes: ${packets}, Perda: ${loss.toFixed(1)}%`;
+                    monitorLog.appendChild(logEntry);
+                    monitorLog.scrollTop = monitorLog.scrollHeight;
+                }
                 
             }, 2000);
         }
@@ -1024,6 +1231,8 @@
         
         function addLatencyDot(latency) {
             const dotsContainer = document.getElementById('latency-dots');
+            if (!dotsContainer) return;
+            
             const dot = document.createElement('span');
             dot.className = `ping-dot ${latency < 50 ? 'dot-good' : latency < 100 ? 'dot-warning' : 'dot-bad'}`;
             dotsContainer.appendChild(dot);
@@ -1035,6 +1244,8 @@
         
         function runFullDiagnostic() {
             const output = document.getElementById('diagnostic-output');
+            if (!output) return;
+            
             output.textContent = 'Iniciando diagnóstico completo...\n\n';
             
             setTimeout(() => {
@@ -1057,9 +1268,10 @@
         
         function applyDNS() {
             const dnsSelect = document.getElementById('dns-select');
-            const selectedDNS = dnsSelect.options[dnsSelect.selectedIndex].text;
             const output = document.getElementById('optimization-output');
+            if (!dnsSelect || !output) return;
             
+            const selectedDNS = dnsSelect.options[dnsSelect.selectedIndex].text;
             output.textContent = `Aplicando configurações DNS: ${selectedDNS}\n`;
             setTimeout(() => {
                 output.textContent += '✓ Configurações DNS aplicadas com sucesso!\n';
@@ -1070,6 +1282,8 @@
         
         function optimizeTCP() {
             const output = document.getElementById('optimization-output');
+            if (!output) return;
+            
             output.textContent = 'Otimizando configurações TCP/IP...\n';
             
             setTimeout(() => {
@@ -1083,6 +1297,8 @@
         
         function clearCache() {
             const output = document.getElementById('optimization-output');
+            if (!output) return;
+            
             output.textContent = 'Limpando cache do sistema...\n';
             
             setTimeout(() => {
@@ -1094,11 +1310,30 @@
             }, 1500);
         }
 
-        // Inicializar debug
-        setTimeout(() => {
-            console.log('=== SISTEMA DE CHAVES INICIADO ===');
-            showAvailableKeys();
-        }, 2000);
+        // =============================================
+        // INICIALIZAÇÃO
+        // =============================================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configurar eventos
+            document.getElementById('login-btn').addEventListener('click', loginUser);
+            document.getElementById('logout-btn').addEventListener('click', logoutUser);
+            
+            document.getElementById('access-key').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    loginUser();
+                }
+            });
+
+            // Inicializar sistema
+            initializeLoginSystem();
+
+            // Debug
+            setTimeout(() => {
+                console.log('=== SISTEMA INICIADO ===');
+                showAvailableKeys();
+            }, 1000);
+        });
     </script>
 </body>
 </html>
