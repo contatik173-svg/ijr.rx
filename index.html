@@ -4,23 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terminal Starlink - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #00ff88;
-            --secondary: #0066ff;
-            --dark: #0a0a0a;
-            --darker: #050505;
+            --primary: #00f0ff;
+            --secondary: #7b42f6;
+            --dark: #0a0a12;
+            --darker: #050508;
             --light: #ffffff;
-            --gray: #333333;
-            --red: #ff4444;
-            --yellow: #ffcc00;
+            --gray: #1e1e2e;
+            --red: #ff2965;
+            --yellow: #ffd700;
         }
         
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Courier New', monospace;
+            font-family: 'Exo 2', sans-serif;
         }
         
         body {
@@ -35,25 +36,28 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: var(--darker);
+            background: linear-gradient(135deg, var(--darker) 0%, #1a1a2e 100%);
         }
 
         .login-box {
-            background: var(--dark);
+            background: rgba(10, 10, 18, 0.9);
             padding: 2rem;
-            border-radius: 10px;
-            border: 2px solid var(--primary);
+            border-radius: 15px;
+            border: 1px solid var(--primary);
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.3);
             width: 90%;
             max-width: 400px;
             text-align: center;
+            backdrop-filter: blur(10px);
         }
 
         .login-logo {
             color: var(--primary);
             font-size: 2.5rem;
             font-weight: bold;
-            text-shadow: 0 0 10px var(--primary);
+            text-shadow: 0 0 20px var(--primary);
             margin-bottom: 1rem;
+            font-family: 'Orbitron', monospace;
         }
 
         .login-input {
@@ -62,34 +66,35 @@
             margin: 0.5rem 0;
             background: var(--gray);
             border: 1px solid var(--primary);
-            border-radius: 5px;
+            border-radius: 8px;
             color: var(--light);
             font-size: 1rem;
+            transition: all 0.3s;
         }
 
         .login-input:focus {
             outline: none;
             border-color: var(--secondary);
-            box-shadow: 0 0 10px rgba(0, 102, 255, 0.5);
+            box-shadow: 0 0 15px rgba(123, 66, 246, 0.5);
         }
 
         .login-btn {
             width: 100%;
             padding: 1rem;
             margin: 1rem 0;
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: var(--dark);
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s;
+            font-family: 'Orbitron', monospace;
         }
 
         .login-btn:hover {
-            background: var(--secondary);
-            color: var(--light);
             transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
         }
 
         .login-message {
@@ -100,13 +105,13 @@
         }
 
         .login-message.error {
-            background: rgba(255, 68, 68, 0.2);
+            background: rgba(255, 41, 101, 0.2);
             border: 1px solid var(--red);
             color: var(--red);
         }
 
         .login-message.success {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(0, 240, 255, 0.2);
             border: 1px solid var(--primary);
             color: var(--primary);
         }
@@ -117,13 +122,15 @@
             border-bottom: 2px solid var(--primary);
             text-align: center;
             display: none;
+            box-shadow: 0 2px 20px rgba(0, 240, 255, 0.2);
         }
         
         .logo {
             color: var(--primary);
             font-size: 2rem;
             font-weight: bold;
-            text-shadow: 0 0 10px var(--primary);
+            text-shadow: 0 0 15px var(--primary);
+            font-family: 'Orbitron', monospace;
         }
         
         .subtitle {
@@ -149,19 +156,21 @@
             margin: 0.5rem 0;
             background: var(--gray);
             border: 1px solid transparent;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s;
             color: var(--light);
+            font-weight: 500;
         }
         
         .menu-item:hover {
             border-color: var(--primary);
             transform: translateX(5px);
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
         }
         
         .menu-item.active {
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: var(--dark);
             font-weight: bold;
         }
@@ -169,13 +178,13 @@
         .user-info {
             background: var(--gray);
             padding: 1rem;
-            border-radius: 5px;
+            border-radius: 8px;
             margin-bottom: 1rem;
             border: 1px solid var(--primary);
         }
 
         .user-key {
-            font-family: monospace;
+            font-family: 'Orbitron', monospace;
             font-size: 0.9rem;
             color: var(--primary);
             word-break: break-all;
@@ -210,15 +219,22 @@
         .status-card {
             background: var(--darker);
             padding: 1.5rem;
-            border-radius: 10px;
+            border-radius: 12px;
             border: 1px solid var(--gray);
             text-align: center;
+            transition: all 0.3s;
+        }
+
+        .status-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
         }
         
         .status-value {
             font-size: 2rem;
             font-weight: bold;
             margin: 0.5rem 0;
+            font-family: 'Orbitron', monospace;
         }
         
         .status-good { color: var(--primary); }
@@ -228,27 +244,27 @@
         .chart-container {
             background: var(--darker);
             padding: 1.5rem;
-            border-radius: 10px;
+            border-radius: 12px;
             margin: 1rem 0;
             border: 1px solid var(--gray);
         }
         
         .btn {
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: var(--dark);
             border: none;
             padding: 0.8rem 1.5rem;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
             margin: 0.5rem;
             transition: all 0.3s;
+            font-family: 'Orbitron', monospace;
         }
         
         .btn:hover {
-            background: var(--secondary);
-            color: var(--light);
             transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
         }
         
         .btn-secondary {
@@ -266,11 +282,11 @@
         .log-container {
             background: var(--darker);
             padding: 1rem;
-            border-radius: 5px;
+            border-radius: 8px;
             height: 200px;
             overflow-y: auto;
             border: 1px solid var(--gray);
-            font-family: 'Courier New', monospace;
+            font-family: 'Orbitron', monospace;
             font-size: 0.9rem;
         }
         
@@ -294,9 +310,9 @@
             background: #000;
             color: var(--primary);
             padding: 1rem;
-            border-radius: 5px;
+            border-radius: 8px;
             min-height: 300px;
-            font-family: 'Courier New', monospace;
+            font-family: 'Orbitron', monospace;
             white-space: pre-wrap;
             border: 1px solid var(--gray);
         }
@@ -330,7 +346,7 @@
         
         .progress-fill {
             height: 100%;
-            background: var(--primary);
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
             transition: width 0.5s;
         }
 
@@ -342,6 +358,11 @@
             font-size: 0.8rem;
             display: none;
         }
+
+        h1, h2, h3 {
+            font-family: 'Orbitron', monospace;
+            color: var(--primary);
+        }
     </style>
 </head>
 <body>
@@ -349,7 +370,7 @@
     <div class="login-container" id="login-container">
         <div class="login-box">
             <div class="login-logo">🛰 IJR.RX</div>
-            <div style="color: var(--secondary); margin-bottom: 2rem;">Sistema de Monitoramento Starlink</div>
+            <div style="color: var(--secondary); margin-bottom: 2rem; font-family: 'Orbitron', monospace;">Sistema de Monitoramento Starlink</div>
             
             <input type="text" id="access-key" class="login-input" placeholder="Digite sua chave de acesso">
             <input type="text" id="user-name" class="login-input" placeholder="Seu nome (opcional)">
@@ -1081,5 +1102,3 @@
     </script>
 </body>
 </html>
-
-
