@@ -38,33 +38,72 @@
             align-items: center;
             min-height: 100vh;
             background: linear-gradient(135deg, var(--darker) 0%, #1a1a2e 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 240, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(123, 66, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(0, 255, 136, 0.05) 0%, transparent 50%);
+            z-index: 0;
         }
 
         .login-box {
             background: rgba(10, 10, 18, 0.9);
-            padding: 2rem;
+            padding: 2.5rem;
             border-radius: 15px;
             border: 1px solid var(--primary);
-            box-shadow: 0 0 30px rgba(0, 240, 255, 0.3);
+            box-shadow: 0 0 40px rgba(0, 240, 255, 0.3);
             width: 90%;
-            max-width: 400px;
+            max-width: 450px;
             text-align: center;
             backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 1;
+            animation: loginGlow 4s infinite alternate;
+        }
+
+        @keyframes loginGlow {
+            0% { box-shadow: 0 0 30px rgba(0, 240, 255, 0.3); }
+            100% { box-shadow: 0 0 40px rgba(123, 66, 246, 0.4); }
         }
 
         .login-logo {
             color: var(--primary);
-            font-size: 2.5rem;
+            font-size: 3rem;
             font-weight: bold;
             text-shadow: 0 0 20px var(--primary);
             margin-bottom: 1rem;
             font-family: 'Orbitron', monospace;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .login-logo::before, .login-logo::after {
+            content: '';
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary));
+        }
+
+        .login-logo::after {
+            background: linear-gradient(90deg, var(--primary), transparent);
         }
 
         .login-input {
             width: 100%;
-            padding: 1rem;
-            margin: 0.5rem 0;
+            padding: 1.2rem;
+            margin: 0.8rem 0;
             background: var(--gray);
             border: 1px solid var(--primary);
             border-radius: 8px;
@@ -81,8 +120,8 @@
 
         .login-btn {
             width: 100%;
-            padding: 1rem;
-            margin: 1rem 0;
+            padding: 1.2rem;
+            margin: 1.2rem 0;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: var(--dark);
             border: none;
@@ -91,6 +130,24 @@
             cursor: pointer;
             transition: all 0.3s;
             font-family: 'Orbitron', monospace;
+            font-size: 1.1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
+        }
+
+        .login-btn:hover::before {
+            left: 100%;
         }
 
         .login-btn:hover {
@@ -103,6 +160,7 @@
             padding: 0.8rem;
             border-radius: 5px;
             display: none;
+            animation: fadeIn 0.5s;
         }
 
         .login-message.error {
@@ -119,40 +177,76 @@
         
         .terminal-header {
             background: var(--darker);
-            padding: 1rem;
+            padding: 1.2rem;
             border-bottom: 2px solid var(--primary);
             text-align: center;
             display: none;
             box-shadow: 0 2px 20px rgba(0, 240, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .terminal-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.05), transparent);
+            animation: headerScan 3s linear infinite;
+        }
+
+        @keyframes headerScan {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
         }
         
         .logo {
             color: var(--primary);
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: bold;
             text-shadow: 0 0 15px var(--primary);
             font-family: 'Orbitron', monospace;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
         
         .subtitle {
             color: var(--secondary);
-            font-size: 1rem;
+            font-size: 1.1rem;
+            margin-top: 5px;
         }
         
         .container {
             display: none;
-            grid-template-columns: 250px 1fr;
+            grid-template-columns: 280px 1fr;
             min-height: 100vh;
         }
         
         .sidebar {
             background: var(--darker);
-            padding: 1rem;
+            padding: 1.5rem;
             border-right: 1px solid var(--gray);
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
         }
         
         .menu-item {
-            padding: 0.8rem 1rem;
+            padding: 1rem 1.2rem;
             margin: 0.5rem 0;
             background: var(--gray);
             border: 1px solid transparent;
@@ -161,6 +255,9 @@
             transition: all 0.3s;
             color: var(--light);
             font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         
         .menu-item:hover {
@@ -177,10 +274,22 @@
 
         .user-info {
             background: var(--gray);
-            padding: 1rem;
+            padding: 1.2rem;
             border-radius: 8px;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             border: 1px solid var(--primary);
+            position: relative;
+        }
+
+        .user-info::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 8px 8px 0 0;
         }
 
         .user-key {
@@ -188,12 +297,13 @@
             font-size: 0.9rem;
             color: var(--primary);
             word-break: break-all;
+            margin-top: 5px;
         }
 
         .key-status {
             display: inline-block;
-            padding: 0.2rem 0.5rem;
-            border-radius: 3px;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
             font-size: 0.7rem;
             font-weight: bold;
             margin-left: 0.5rem;
@@ -220,6 +330,7 @@
         .content {
             padding: 2rem;
             background: var(--dark);
+            overflow-y: auto;
         }
         
         .panel {
@@ -238,8 +349,8 @@
         
         .status-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.2rem;
             margin-bottom: 2rem;
         }
         
@@ -250,15 +361,34 @@
             border: 1px solid var(--gray);
             text-align: center;
             transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .status-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+
+        .status-card:hover::before {
+            transform: scaleX(1);
         }
 
         .status-card:hover {
             border-color: var(--primary);
             box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+            transform: translateY(-5px);
         }
         
         .status-value {
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: bold;
             margin: 0.5rem 0;
             font-family: 'Orbitron', monospace;
@@ -272,8 +402,20 @@
             background: var(--darker);
             padding: 1.5rem;
             border-radius: 12px;
-            margin: 1rem 0;
+            margin: 1.2rem 0;
             border: 1px solid var(--gray);
+            position: relative;
+        }
+
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 12px 12px 0 0;
         }
         
         .btn {
@@ -287,6 +429,23 @@
             margin: 0.5rem;
             transition: all 0.3s;
             font-family: 'Orbitron', monospace;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
         }
         
         .btn:hover {
@@ -303,7 +462,7 @@
             background: var(--red);
             color: white;
             width: 100%;
-            margin-top: 1rem;
+            margin-top: 1.5rem;
             padding: 0.8rem;
             border: none;
             border-radius: 8px;
@@ -311,6 +470,10 @@
             font-weight: bold;
             font-family: 'Orbitron', monospace;
             transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .btn-logout:hover {
@@ -332,29 +495,34 @@
         
         .log-entry {
             margin: 0.3rem 0;
-            padding: 0.3rem;
+            padding: 0.5rem;
             border-left: 3px solid var(--primary);
+            background: rgba(0, 240, 255, 0.05);
+            border-radius: 0 4px 4px 0;
         }
         
         .log-error {
             border-left-color: var(--red);
             color: var(--red);
+            background: rgba(255, 41, 101, 0.05);
         }
         
         .log-warning {
             border-left-color: var(--yellow);
             color: var(--yellow);
+            background: rgba(255, 215, 0, 0.05);
         }
         
         .terminal-output {
             background: #000;
             color: var(--primary);
-            padding: 1rem;
+            padding: 1.2rem;
             border-radius: 8px;
             min-height: 300px;
             font-family: 'Orbitron', monospace;
             white-space: pre-wrap;
             border: 1px solid var(--gray);
+            overflow-y: auto;
         }
         
         .ping-dot {
@@ -363,6 +531,13 @@
             height: 10px;
             border-radius: 50%;
             margin: 0 2px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
         }
         
         .dot-good { background: var(--primary); }
@@ -372,7 +547,7 @@
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1rem;
+            gap: 1.2rem;
         }
         
         .progress-bar {
@@ -382,12 +557,31 @@
             border-radius: 10px;
             overflow: hidden;
             margin: 0.5rem 0;
+            position: relative;
         }
         
         .progress-fill {
             height: 100%;
             background: linear-gradient(90deg, var(--primary), var(--secondary));
             transition: width 0.5s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: progressShine 2s infinite;
+        }
+
+        @keyframes progressShine {
+            0% { left: -100%; }
+            100% { left: 100%; }
         }
 
         .debug-info {
@@ -402,6 +596,17 @@
         h1, h2, h3 {
             font-family: 'Orbitron', monospace;
             color: var(--primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h2::after {
+            content: '';
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), transparent);
         }
 
         .key-expiry {
@@ -409,11 +614,142 @@
             color: var(--yellow);
             margin-top: 0.3rem;
         }
+
+        .satellite-animation {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .satellite {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary);
+            animation: orbit 20s linear infinite;
+        }
+
+        .satellite::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -30px;
+            width: 30px;
+            height: 2px;
+            background: var(--primary);
+            transform: translateY(-50%);
+        }
+
+        @keyframes orbit {
+            0% { transform: rotate(0deg) translateX(150px) rotate(0deg); }
+            100% { transform: rotate(360deg) translateX(150px) rotate(-360deg); }
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+                position: fixed;
+                top: 1rem;
+                left: 1rem;
+                z-index: 1000;
+                background: var(--primary);
+                color: var(--dark);
+                border: none;
+                border-radius: 5px;
+                padding: 0.5rem;
+                font-size: 1.2rem;
+            }
+            
+            .mobile-sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 280px;
+                height: 100%;
+                background: var(--darker);
+                z-index: 999;
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+                padding: 1.5rem;
+                overflow-y: auto;
+            }
+            
+            .mobile-sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .content {
+                padding: 1rem;
+            }
+            
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animações de entrada */
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .animate-in {
+            animation: slideIn 0.5s ease-out;
+        }
+
+        /* Efeitos de partículas */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: float 15s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100px) translateX(20px); opacity: 0; }
+        }
     </style>
 </head>
 <body>
     <!-- Tela de Login -->
     <div class="login-container" id="login-container">
+        <div class="particles" id="particles"></div>
+        <div class="satellite-animation">
+            <div class="satellite" style="top: 20%; animation-delay: 0s;"></div>
+            <div class="satellite" style="top: 50%; animation-delay: -7s;"></div>
+            <div class="satellite" style="top: 80%; animation-delay: -14s;"></div>
+        </div>
+        
         <div class="login-box">
             <div class="login-logo">🛰 IJR.RX</div>
             <div style="color: var(--secondary); margin-bottom: 2rem; font-family: 'Orbitron', monospace;">Sistema de Monitoramento Starlink</div>
@@ -454,14 +790,28 @@
                 <div id="key-expiry-info" class="key-expiry"></div>
             </div>
             
-            <div class="menu-item active" data-panel="dashboard">📊 Dashboard</div>
-            <div class="menu-item" data-panel="speedtest">🚀 Teste de Velocidade</div>
-            <div class="menu-item" data-panel="monitor">📡 Monitor em Tempo Real</div>
-            <div class="menu-item" data-panel="diagnostics">🔧 Diagnóstico</div>
-            <div class="menu-item" data-panel="optimization">⚡ Otimização</div>
-            <div class="menu-item" data-panel="settings">⚙ Configurações</div>
+            <div class="menu-item active" data-panel="dashboard">
+                <span>📊</span> Dashboard
+            </div>
+            <div class="menu-item" data-panel="speedtest">
+                <span>🚀</span> Teste de Velocidade
+            </div>
+            <div class="menu-item" data-panel="monitor">
+                <span>📡</span> Monitor em Tempo Real
+            </div>
+            <div class="menu-item" data-panel="diagnostics">
+                <span>🔧</span> Diagnóstico
+            </div>
+            <div class="menu-item" data-panel="optimization">
+                <span>⚡</span> Otimização
+            </div>
+            <div class="menu-item" data-panel="settings">
+                <span>⚙</span> Configurações
+            </div>
             
-            <button class="btn-logout" id="logout-btn">🚪 Sair do Sistema</button>
+            <button class="btn-logout" id="logout-btn">
+                <span>🚪</span> Sair do Sistema
+            </button>
         </div>
         
         <div class="content">
@@ -469,31 +819,33 @@
             <div id="dashboard" class="panel active">
                 <h2>📊 Dashboard Starlink</h2>
                 <div class="status-grid">
-                    <div class="status-card">
+                    <div class="status-card animate-in">
                         <div>Latência</div>
-                        <div class="status-value" id="latency-value">-- ms</div>
+                        <div class="status-value status-good" id="latency-value">-- ms</div>
                         <div id="latency-status">Carregando...</div>
                     </div>
-                    <div class="status-card">
+                    <div class="status-card animate-in" style="animation-delay: 0.1s;">
                         <div>Download</div>
-                        <div class="status-value" id="download-value">-- Mbps</div>
+                        <div class="status-value status-good" id="download-value">-- Mbps</div>
                         <div>Velocidade</div>
                     </div>
-                    <div class="status-card">
+                    <div class="status-card animate-in" style="animation-delay: 0.2s;">
                         <div>Upload</div>
-                        <div class="status-value" id="upload-value">-- Mbps</div>
+                        <div class="status-value status-good" id="upload-value">-- Mbps</div>
                         <div>Velocidade</div>
                     </div>
-                    <div class="status-card">
+                    <div class="status-card animate-in" style="animation-delay: 0.3s;">
                         <div>Estabilidade</div>
-                        <div class="status-value" id="stability-value">-- %</div>
+                        <div class="status-value status-good" id="stability-value">-- %</div>
                         <div>Conectividade</div>
                     </div>
                 </div>
                 
                 <div class="chart-container">
                     <h3>📈 Histórico de Latência</h3>
-                    <canvas id="latencyChart" width="400" height="200"></canvas>
+                    <div id="latency-chart-container">
+                        <canvas id="latencyChart" width="400" height="200"></canvas>
+                    </div>
                 </div>
                 
                 <div class="stats-grid">
@@ -570,7 +922,9 @@
                 
                 <div class="chart-container">
                     <h3>📊 Gráfico de Latência em Tempo Real</h3>
-                    <canvas id="realtimeChart" width="400" height="200"></canvas>
+                    <div id="realtime-chart-container">
+                        <canvas id="realtimeChart" width="400" height="200"></canvas>
+                    </div>
                 </div>
                 
                 <div class="log-container" id="monitor-log">
@@ -671,6 +1025,7 @@
                 }
             }
             showLoginInterface();
+            createParticles();
         }
 
         function loginUser() {
@@ -990,6 +1345,8 @@
             document.getElementById('access-key').value = '';
             document.getElementById('user-name').value = '';
             document.getElementById('login-message').style.display = 'none';
+            
+            createParticles();
         }
 
         function showMainInterface(userName, accessKey) {
@@ -1021,6 +1378,43 @@
             setTimeout(() => {
                 messageEl.style.display = 'none';
             }, 5000);
+        }
+
+        // =============================================
+        // ANIMAÇÕES E EFEITOS VISUAIS
+        // =============================================
+
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            if (!particlesContainer) return;
+            
+            particlesContainer.innerHTML = '';
+            
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // Posição aleatória
+                const left = Math.random() * 100;
+                const delay = Math.random() * 15;
+                const duration = 10 + Math.random() * 10;
+                
+                particle.style.left = `${left}%`;
+                particle.style.animationDelay = `${delay}s`;
+                particle.style.animationDuration = `${duration}s`;
+                
+                // Tamanho e cor aleatórios
+                const size = 1 + Math.random() * 2;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                // Cor aleatória entre as cores do tema
+                const colors = ['var(--primary)', 'var(--secondary)', 'var(--green)', 'var(--yellow)'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.background = color;
+                
+                particlesContainer.appendChild(particle);
+            }
         }
 
         // =============================================
