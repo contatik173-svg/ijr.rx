@@ -1203,7 +1203,7 @@
 
     <script>
         // =============================================
-        // SISTEMA DE CHAVES INTEGRADO COM PAINEL ADMIN
+        // SISTEMA DE VALIDAÇÃO DE CHAVES CORRIGIDO
         // =============================================
 
         // Sistema de Login
@@ -1230,6 +1230,10 @@
                 if (validationResult.valid) {
                     showMainInterface(savedUser, savedKey);
                     return;
+                } else {
+                    // Limpar dados inválidos
+                    localStorage.removeItem('starlinkUser');
+                    localStorage.removeItem('starlinkKey');
                 }
             }
             showLoginInterface();
@@ -1272,10 +1276,14 @@
         }
 
         function validateKey(key) {
+            console.log('🔑 Validando chave:', key);
+            
             // 1. Verificar chaves de emergência do localStorage
             const emergencyKeys = getEmergencyKeys();
+            console.log('🆘 Chaves de emergência:', emergencyKeys);
+            
             if (emergencyKeys.includes(key)) {
-                console.log('Chave de emergência aceita:', key);
+                console.log('✅ Chave de emergência aceita:', key);
                 return {
                     valid: true,
                     keyData: {
@@ -1290,11 +1298,17 @@
             
             // 2. Verificar chaves do sistema no localStorage
             const keys = loadKeysFromStorage();
+            console.log('📋 Chaves do sistema carregadas:', keys);
+            
             const validKey = keys.find(k => k.key === key);
+            console.log('🔍 Procurando chave no sistema:', validKey);
             
             if (validKey) {
+                console.log('🎯 Chave encontrada no sistema:', validKey);
+                
                 // Verificar se a chave está ativa
                 if (validKey.active === false) {
+                    console.log('❌ Chave desativada');
                     return {
                         valid: false,
                         message: 'Chave desativada pelo administrador'
@@ -1302,31 +1316,40 @@
                 }
                 
                 // Verificar se a chave expirou
-                if (validKey.expiration && new Date() > new Date(validKey.expiration)) {
-                    return {
-                        valid: false,
-                        message: 'Chave expirada'
-                    };
+                if (validKey.expiration) {
+                    const expirationDate = new Date(validKey.expiration);
+                    const now = new Date();
+                    console.log('📅 Data de expiração:', expirationDate);
+                    console.log('⏰ Data atual:', now);
+                    
+                    if (expirationDate <= now) {
+                        console.log('❌ Chave expirada');
+                        return {
+                            valid: false,
+                            message: 'Chave expirada'
+                        };
+                    }
                 }
                 
                 // Verificar se atingiu o limite de usos
                 if (validKey.maxUses > 0 && (validKey.uses || 0) >= validKey.maxUses) {
+                    console.log('❌ Limite de usos atingido');
                     return {
                         valid: false,
                         message: 'Limite de usos atingido'
                     };
                 }
                 
-                console.log('Chave do sistema encontrada:', key);
+                console.log('✅ Chave válida do sistema');
                 return {
                     valid: true,
                     keyData: validKey
                 };
             }
             
-            // 3. Verificar formato básico da chave (fallback)
+            // 3. Verificar formato básico da chave (fallback - apenas para desenvolvimento)
             if (isValidKeyFormat(key)) {
-                console.log('Chave com formato válido (fallback):', key);
+                console.log('⚠️ Chave com formato válido (fallback):', key);
                 return {
                     valid: true,
                     keyData: {
@@ -1339,7 +1362,7 @@
                 };
             }
             
-            console.log('Chave inválida:', key);
+            console.log('❌ Chave inválida');
             return {
                 valid: false,
                 message: 'Chave de acesso inválida!'
@@ -1350,10 +1373,12 @@
             try {
                 const emergencyKeys = localStorage.getItem('emergencyKeys');
                 if (emergencyKeys) {
-                    return emergencyKeys.split('\n').filter(key => key.trim() !== '');
+                    return emergencyKeys.split('\n')
+                        .map(key => key.trim())
+                        .filter(key => key !== '');
                 }
             } catch (error) {
-                console.error('Erro ao carregar chaves de emergência:', error);
+                console.error('❌ Erro ao carregar chaves de emergência:', error);
             }
             
             // Fallback para chaves padrão
@@ -1436,13 +1461,17 @@
         function loadKeysFromStorage() {
             try {
                 const storedKeys = localStorage.getItem('starlinkKeys');
+                console.log('📁 Carregando chaves do localStorage:', storedKeys);
+                
                 if (storedKeys) {
                     const keys = JSON.parse(storedKeys);
+                    console.log('✅ Chaves parseadas:', keys);
                     return Array.isArray(keys) ? keys : [];
                 }
             } catch (error) {
-                console.error('Erro ao carregar chaves:', error);
+                console.error('❌ Erro ao carregar chaves:', error);
             }
+            console.log('ℹ️ Nenhuma chave encontrada no localStorage');
             return [];
         }
 
@@ -1460,14 +1489,16 @@
                 keyData.lastUsed = new Date().toISOString();
                 keyData.lastUser = userName;
                 saveKeysToStorage(keys);
+                console.log('📝 Uso registrado para a chave:', key);
             }
         }
 
         function saveKeysToStorage(keys) {
             try {
                 localStorage.setItem('starlinkKeys', JSON.stringify(keys));
+                console.log('💾 Chaves salvas no localStorage:', keys.length);
             } catch (error) {
-                console.error('Erro ao salvar chaves:', error);
+                console.error('❌ Erro ao salvar chaves:', error);
             }
         }
 
@@ -1563,7 +1594,7 @@
         }
 
         function logoutUser() {
-            console.log('Executando logout...');
+            console.log('🚪 Executando logout...');
             
             // Parar verificação de chave
             if (keyCheckInterval) {
