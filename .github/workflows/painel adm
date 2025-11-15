@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - Gerenciamento de Chaves</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00f0ff;
+            --secondary: #7b42f6;
+            --dark: #0a0a12;
+            --darker: #050508;
+            --light: #ffffff;
+            --gray: #1e1e2e;
+            --red: #ff2965;
+            --yellow: #ffd700;
+            --green: #00ff88;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Exo 2', sans-serif;
+        }
+        
+        body {
+            background: var(--dark);
+            color: var(--light);
+            overflow-x: hidden;
+        }
+
+        /* Container Principal */
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .admin-sidebar {
+            width: 280px;
+            background: var(--darker);
+            padding: 1.5rem;
+            border-right: 1px solid var(--gray);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .admin-logo {
+            color: var(--primary);
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-family: 'Orbitron', monospace;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--gray);
+        }
+
+        .admin-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .menu-item {
+            padding: 1rem;
+            background: var(--gray);
+            border: 1px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .menu-item:hover {
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .menu-item.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--dark);
+            font-weight: bold;
+        }
+
+        /* Conteúdo Principal */
+        .admin-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 2rem;
+        }
+
+        .admin-header {
+            background: var(--darker);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--primary);
+            position: relative;
+        }
+
+        .admin-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 12px 12px 0 0;
+        }
+
+        .admin-title {
+            font-family: 'Orbitron', monospace;
+            color: var(--primary);
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .admin-subtitle {
+            color: var(--secondary);
+            font-size: 1rem;
+        }
+
+        /* Painéis */
+        .admin-panel {
+            display: none;
+            background: var(--darker);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--gray);
+            margin-bottom: 2rem;
+        }
+
+        .admin-panel.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Formulários */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem;
+            background: var(--gray);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            color: var(--light);
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 15px rgba(123, 66, 246, 0.5);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 1rem;
+            background: var(--gray);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            color: var(--light);
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        /* Botões */
+        .btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--dark);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-family: 'Orbitron', monospace;
+            margin-right: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--red), #ff0040);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--green), #00cc6a);
+            color: var(--dark);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--yellow), #ffaa00);
+            color: var(--dark);
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            margin: 0.2rem;
+        }
+
+        /* Tabelas */
+        .table-container {
+            background: var(--gray);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--primary);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        .admin-table th {
+            background: var(--darker);
+            color: var(--primary);
+            padding: 1rem;
+            text-align: left;
+            font-family: 'Orbitron', monospace;
+            border-bottom: 2px solid var(--primary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .admin-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--dark);
+        }
+
+        .admin-table tr:hover {
+            background: rgba(0, 240, 255, 0.05);
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .status-active {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--green);
+            border: 1px solid var(--green);
+        }
+
+        .status-inactive {
+            background: rgba(255, 41, 101, 0.2);
+            color: var(--red);
+            border: 1px solid var(--red);
+        }
+
+        .status-expired {
+            background: rgba(255, 215, 0, 0.2);
+            color: var(--yellow);
+            border: 1px solid var(--yellow);
+        }
+
+        /* Cards de Estatísticas */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--gray);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--primary);
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 240, 255, 0.2);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            font-family: 'Orbitron', monospace;
+            margin: 0.5rem 0;
+        }
+
+        .stat-label {
+            color: var(--secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--darker);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 2px solid var(--primary);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Alertas */
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: none;
+        }
+
+        .alert-success {
+            background: rgba(0, 255, 136, 0.2);
+            border: 1px solid var(--green);
+            color: var(--green);
+        }
+
+        .alert-error {
+            background: rgba(255, 41, 101, 0.2);
+            border: 1px solid var(--red);
+            color: var(--red);
+        }
+
+        /* Chave Display */
+        .key-display {
+            background: var(--darker);
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            color: var(--primary);
+            text-align: center;
+            word-break: break-all;
+        }
+
+        .copy-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                margin-left: 0;
+            }
+
+            .admin-content {
+                margin-left: 0;
+            }
+
+            .admin-container {
+                flex-direction: column;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .btn {
+                width: 100%;
+                margin-right: 0;
+            }
+
+            .table-container {
+                overflow-x: auto;
+            }
+
+            .copy-buttons {
+                flex-direction: column;
+            }
+        }
+
+        .debug-panel {
+            background: var(--darker);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--yellow);
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            display: none;
+        }
+
+        .debug-toggle {
+            background: var(--yellow);
+            color: var(--dark);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .key-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <div class="admin-sidebar">
+            <div class="admin-logo">🛰 IJR.RX ADMIN</div>
+            
+            <div class="admin-menu">
+                <div class="menu-item active" data-panel="dashboard">
+                    📊 Dashboard
+                </div>
+                <div class="menu-item" data-panel="keys-management">
+                    🔑 Gerenciar Chaves
+                </div>
+                <div class="menu-item" data-panel="create-key">
+                    ➕ Criar Chave
+                </div>
+                <div class="menu-item" data-panel="users">
+                    👥 Usuários
+                </div>
+                <div class="menu-item" data-panel="settings">
+                    ⚙ Configurações
+                </div>
+                <div class="menu-item" onclick="goToMainSite()">
+                    🏠 Site Principal
+                </div>
+            </div>
+        </div>
+
+        <!-- Conteúdo Principal -->
+        <div class="admin-content">
+            <!-- Header -->
+            <div class="admin-header">
+                <h1 class="admin-title">Painel Administrativo</h1>
+                <p class="admin-subtitle">Gerenciamento de Chaves de Acesso - Sistema Starlink</p>
+            </div>
+
+            <!-- Alertas -->
+            <div id="alert-success" class="alert alert-success"></div>
+            <div id="alert-error" class="alert alert-error"></div>
+
+            <!-- Painel: Dashboard -->
+            <div id="dashboard" class="admin-panel active">
+                <h2 style="color: var(--primary); margin-bottom: 1.5rem;">📊 Dashboard</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total de Chaves</div>
+                        <div class="stat-value" id="total-keys">0</div>
+                        <div>Chaves criadas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Chaves Ativas</div>
+                        <div class="stat-value" id="active-keys">0</div>
+                        <div>Em uso</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Chaves Expiradas</div>
+                        <div class="stat-value" id="expired-keys">0</div>
+                        <div>Vencidas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Usuários Online</div>
+                        <div class="stat-value" id="online-users">0</div>
+                        <div>Ativos agora</div>
+                    </div>
+                </div>
+
+                <h3 style="color: var(--primary); margin: 2rem 0 1rem 0;">🔑 Chaves Recentes</h3>
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Chave</th>
+                                <th>Nome</th>
+                                <th>Status</th>
+                                <th>Expira em</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-keys-table">
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--secondary);">Carregando chaves...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <button class="debug-toggle" onclick="toggleDebug()">🐛 Debug Info</button>
+                <div class="debug-panel" id="debug-panel">
+                    <strong>Informações de Debug:</strong>
+                    <div id="debug-info"></div>
+                </div>
+            </div>
+
+            <!-- Painel: Gerenciar Chaves -->
+            <div id="keys-management" class="admin-panel">
+                <h2 style="color: var(--primary); margin-bottom: 1.5rem;">🔑 Gerenciar Chaves</h2>
+                
+                <div style="margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <input type="text" id="search-keys" class="form-input" placeholder="🔍 Buscar chaves..." style="flex: 1; min-width: 200px;">
+                    <button class="btn" onclick="refreshKeys()">🔄 Atualizar</button>
+                    <button class="btn btn-success" onclick="showAllKeys()">📋 Ver Todas as Chaves</button>
+                </div>
+
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Chave</th>
+                                <th>Nome</th>
+                                <th>Criada em</th>
+                                <th>Expira em</th>
+                                <th>Usos</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="keys-table">
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: var(--secondary);">Carregando chaves...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Painel: Criar Chave -->
+            <div id="create-key" class="admin-panel">
+                <h2 style="color: var(--primary); margin-bottom: 1.5rem;">➕ Criar Nova Chave</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">Nome da Chave (Opcional)</label>
+                    <input type="text" id="key-name" class="form-input" placeholder="Ex: Chave VIP, Acesso Temporário...">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Tipo de Chave</label>
+                    <select id="key-type" class="form-select">
+                        <option value="temporary">Temporária</option>
+                        <option value="permanent">Permanente</option>
+                        <option value="trial">Teste (24h)</option>
+                        <option value="vip">VIP (7 dias)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="duration-group">
+                    <label class="form-label">Duração (dias)</label>
+                    <input type="number" id="key-duration" class="form-input" value="7" min="1" max="365">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Usos Máximos (0 = ilimitado)</label>
+                    <input type="number" id="key-max-uses" class="form-input" value="0" min="0">
+                </div>
+
+                <button class="btn btn-success" onclick="generateKey()">🎲 Gerar Chave</button>
+
+                <div id="generated-key-container" style="display: none; margin-top: 2rem;">
+                    <div class="form-group">
+                        <label class="form-label">Chave Gerada</label>
+                        <div class="key-display" id="generated-key-display"></div>
+                        <div class="copy-buttons">
+                            <button class="btn" onclick="copyKey()">📋 Copiar Chave</button>
+                            <button class="btn" onclick="copyLink()">🔗 Copiar Link</button>
+                            <button class="btn btn-warning" onclick="shareKey()">📤 Compartilhar</button>
+                            <button class="btn btn-success" onclick="sendKeyToClient()">📧 Enviar para Cliente</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Link de Acesso Direto</label>
+                        <input type="text" id="access-link" class="form-input" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Instruções para o Cliente</label>
+                        <textarea id="client-instructions" class="form-input" rows="4" readonly>
+Olá! Aqui está sua chave de acesso para o sistema Starlink:
+
+1. Acesse: [LINK_DO_SISTEMA]
+2. Use a chave: [CHAVE_GERADA]
+3. Seu acesso expira em: [DATA_EXPIRACAO]
+
+Qualquer problema, entre em contato!
+                        </textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Painel: Usuários -->
+            <div id="users" class="admin-panel">
+                <h2 style="color: var(--primary); margin-bottom: 1.5rem;">👥 Usuários Ativos</h2>
+                
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Usuário</th>
+                                <th>Chave</th>
+                                <th>Último Acesso</th>
+                                <th>IP</th>
+                                <th>Tempo Online</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table">
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: var(--secondary);">Nenhum usuário online</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Painel: Configurações -->
+            <div id="settings" class="admin-panel">
+                <h2 style="color: var(--primary); margin-bottom: 1.5rem;">⚙ Configurações do Sistema</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">Chaves de Emergência</label>
+                    <textarea id="emergency-keys" class="form-input" rows="5" placeholder="Insira as chaves de emergência, uma por linha"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Auto-exclusão de Chaves Expiradas</label>
+                    <select id="auto-delete" class="form-select">
+                        <option value="0">Desativado</option>
+                        <option value="7">7 dias após expiração</option>
+                        <option value="30">30 dias após expiração</option>
+                        <option value="90">90 dias após expiração</option>
+                    </select>
+                </div>
+
+                <button class="btn" onclick="saveSettings()">💾 Salvar Configurações</button>
+                <button class="btn btn-danger" onclick="resetSystem()">🔄 Resetar Sistema</button>
+                
+                <div style="margin-top: 2rem;">
+                    <h3 style="color: var(--primary); margin-bottom: 1rem;">Exportar/Importar Dados</h3>
+                    <button class="btn" onclick="exportKeys()">📤 Exportar Chaves</button>
+                    <button class="btn" onclick="importKeys()">📥 Importar Chaves</button>
+                    <input type="file" id="import-file" accept=".json" style="display: none;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação -->
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">×</button>
+            <h3 style="color: var(--primary); margin-bottom: 1rem;" id="modal-title">Confirmar Ação</h3>
+            <p id="modal-message">Tem certeza que deseja realizar esta ação?</p>
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: flex-end;">
+                <button class="btn btn-danger" id="modal-confirm-btn">Confirmar</button>
+                <button class="btn" onclick="closeModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para mostrar todas as chaves -->
+    <div id="all-keys-modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <button class="modal-close" onclick="closeAllKeysModal()">×</button>
+            <h3 style="color: var(--primary); margin-bottom: 1rem;">🔑 Todas as Chaves do Sistema</h3>
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Chave</th>
+                            <th>Nome</th>
+                            <th>Status</th>
+                            <th>Expira em</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="all-keys-table">
+                        <!-- Preenchido via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =============================================
+        // SISTEMA DE GERENCIAMENTO DE CHAVES - CORRIGIDO
+        // =============================================
+
+        let keys = [];
+        let currentModalAction = null;
+        let currentModalData = null;
+
+        // Inicializar o sistema
+        function initializeAdminSystem() {
+            console.log('🚀 Inicializando sistema administrativo...');
+            
+            loadKeysFromStorage();
+            updateDashboard();
+            loadSettings();
+            
+            // Configurar navegação
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    if (this.getAttribute('data-panel')) {
+                        document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+                        document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+                        
+                        this.classList.add('active');
+                        const panelId = this.getAttribute('data-panel');
+                        document.getElementById(panelId).classList.add('active');
+                    }
+                });
+            });
+
+            // Configurar busca
+            document.getElementById('search-keys').addEventListener('input', function() {
+                filterKeys(this.value);
+            });
+
+            // Configurar tipo de chave
+            document.getElementById('key-type').addEventListener('change', function() {
+                updateKeyTypeOptions();
+            });
+
+            // Atualizar dados iniciais
+            refreshAllData();
+
+            console.log('✅ Sistema administrativo inicializado');
+            console.log('📊 Total de chaves carregadas:', keys.length);
+        }
+
+        // Carregar chaves do localStorage
+        function loadKeysFromStorage() {
+            try {
+                const storedKeys = localStorage.getItem('starlinkKeys');
+                console.log('📁 Tentando carregar chaves do localStorage...');
+                
+                if (storedKeys) {
+                    keys = JSON.parse(storedKeys);
+                    console.log('✅ Chaves carregadas:', keys.length);
+                    
+                    if (keys.length === 0) {
+                        console.log('ℹ️ Nenhuma chave encontrada, criando chaves de exemplo...');
+                        createSampleKeys();
+                    }
+                } else {
+                    console.log('ℹ️ Nenhuma chave encontrada no localStorage, criando chaves de exemplo...');
+                    createSampleKeys();
+                }
+            } catch (error) {
+                console.error('❌ Erro ao carregar chaves:', error);
+                keys = [];
+                createSampleKeys();
+            }
+        }
+
+        // Criar chaves de exemplo
+        function createSampleKeys() {
+            console.log('🎨 Criando chaves de exemplo...');
+            
+            const sampleKeys = [
+                {
+                    key: 'VIP-789012-EFGH-KEY',
+                    name: 'Chave VIP Exemplo',
+                    created: new Date().toISOString(),
+                    expiration: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                    active: true,
+                    uses: 3,
+                    maxUses: 10,
+                    type: 'vip',
+                    lastUsed: new Date().toISOString(),
+                    lastUser: 'Usuário Demo'
+                },
+                {
+                    key: 'TEST-123456-ABCD-KEY',
+                    name: 'Chave Teste 24h',
+                    created: new Date().toISOString(),
+                    expiration: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+                    active: true,
+                    uses: 1,
+                    maxUses: 5,
+                    type: 'trial',
+                    lastUsed: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+                    lastUser: 'Usuário Teste'
+                },
+                {
+                    key: 'TEMP-987654-XYZ-KEY',
+                    name: 'Chave Temporária',
+                    created: new Date().toISOString(),
+                    expiration: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                    active: false,
+                    uses: 0,
+                    maxUses: 0,
+                    type: 'temporary'
+                }
+            ];
+            
+            keys = sampleKeys;
+            saveKeysToStorage();
+            console.log('✅ Chaves de exemplo criadas:', keys.length);
+        }
+
+        // Salvar chaves no localStorage
+        function saveKeysToStorage() {
+            try {
+                localStorage.setItem('starlinkKeys', JSON.stringify(keys));
+                console.log('💾 Chaves salvas no localStorage:', keys.length);
+            } catch (error) {
+                console.error('❌ Erro ao salvar chaves:', error);
+                showAlert('Erro ao salvar chaves!', 'error');
+            }
+        }
+
+        // Atualizar todos os dados
+        function refreshAllData() {
+            updateDashboard();
+            updateKeysTable();
+            updateRecentKeysTable();
+            updateUsersTable();
+            updateDebugInfo();
+        }
+
+        // Atualizar dashboard
+        function updateDashboard() {
+            const totalKeys = keys.length;
+            const activeKeys = keys.filter(k => 
+                k.active && 
+                (!k.expiration || new Date(k.expiration) > new Date()) &&
+                (!k.maxUses || k.maxUses === 0 || (k.uses || 0) < k.maxUses)
+            ).length;
+            
+            const expiredKeys = keys.filter(k => 
+                (k.expiration && new Date(k.expiration) <= new Date()) ||
+                (k.maxUses > 0 && (k.uses || 0) >= k.maxUses)
+            ).length;
+            
+            // Simular usuários online
+            const onlineUsers = keys.filter(k => 
+                k.active && 
+                k.lastUsed && 
+                new Date(k.lastUsed) > new Date(Date.now() - 30 * 60 * 1000)
+            ).length;
+
+            document.getElementById('total-keys').textContent = totalKeys;
+            document.getElementById('active-keys').textContent = activeKeys;
+            document.getElementById('expired-keys').textContent = expiredKeys;
+            document.getElementById('online-users').textContent = onlineUsers;
+
+            console.log('📊 Dashboard atualizado:', { totalKeys, activeKeys, expiredKeys, onlineUsers });
+        }
+
+        // Atualizar tabela de chaves
+        function updateKeysTable() {
+            const tbody = document.getElementById('keys-table');
+            
+            if (keys.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--secondary);">Nenhuma chave encontrada</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = '';
+
+            keys.forEach((keyData) => {
+                const row = document.createElement('tr');
+                
+                const status = getKeyStatus(keyData);
+                const statusClass = `status-${status}`;
+                const statusText = getStatusText(status);
+                
+                const expiresText = keyData.expiration ? 
+                    new Date(keyData.expiration).toLocaleDateString('pt-BR') + ' ' + 
+                    new Date(keyData.expiration).toLocaleTimeString('pt-BR') : 
+                    'Não expira';
+
+                const usesText = `${keyData.uses || 0}${keyData.maxUses ? `/${keyData.maxUses}` : ''}`;
+
+                row.innerHTML = `
+                    <td><strong style="font-family: monospace; font-size: 0.9rem;">${keyData.key}</strong></td>
+                    <td>${keyData.name || 'Sem nome'}</td>
+                    <td>${new Date(keyData.created).toLocaleDateString('pt-BR')}</td>
+                    <td>${expiresText}</td>
+                    <td>${usesText}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td>
+                        <div class="key-actions">
+                            <button class="btn btn-small" onclick="copyToClipboard('${keyData.key}')" title="Copiar chave">
+                                📋
+                            </button>
+                            <button class="btn btn-small" onclick="toggleKey('${keyData.key}')" title="${keyData.active ? 'Desativar' : 'Ativar'}">
+                                ${keyData.active ? '❌' : '✅'}
+                            </button>
+                            <button class="btn btn-small btn-danger" onclick="showDeleteModal('${keyData.key}')" title="Excluir">
+                                🗑
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+
+            console.log('📋 Tabela de chaves atualizada:', keys.length, 'chaves');
+        }
+
+        // Atualizar tabela de chaves recentes
+        function updateRecentKeysTable() {
+            const tbody = document.getElementById('recent-keys-table');
+            
+            if (keys.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--secondary);">Nenhuma chave encontrada</td></tr>';
+                return;
+            }
+
+            // Ordenar por data de criação (mais recentes primeiro)
+            const recentKeys = [...keys]
+                .sort((a, b) => new Date(b.created) - new Date(a.created))
+                .slice(0, 5);
+
+            tbody.innerHTML = '';
+
+            recentKeys.forEach(keyData => {
+                const row = document.createElement('tr');
+                
+                const status = getKeyStatus(keyData);
+                const statusClass = `status-${status}`;
+                const statusText = getStatusText(status);
+                
+                const expiresText = keyData.expiration ? 
+                    new Date(keyData.expiration).toLocaleDateString('pt-BR') : 
+                    'Não expira';
+
+                row.innerHTML = `
+                    <td><strong style="font-family: monospace; font-size: 0.9rem;">${keyData.key}</strong></td>
+                    <td>${keyData.name || 'Sem nome'}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td>${expiresText}</td>
+                    <td>
+                        <div class="key-actions">
+                            <button class="btn btn-small" onclick="copyToClipboard('${keyData.key}')" title="Copiar chave">
+                                📋
+                            </button>
+                            <button class="btn btn-small" onclick="shareKeyDirect('${keyData.key}')" title="Compartilhar">
+                                📤
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+
+            console.log('🆕 Tabela de chaves recentes atualizada');
+        }
+
+        // Mostrar todas as chaves em um modal
+        function showAllKeys() {
+            const modal = document.getElementById('all-keys-modal');
+            const tbody = document.getElementById('all-keys-table');
+            
+            tbody.innerHTML = '';
+
+            keys.forEach((keyData) => {
+                const row = document.createElement('tr');
+                
+                const status = getKeyStatus(keyData);
+                const statusClass = `status-${status}`;
+                const statusText = getStatusText(status);
+                
+                const expiresText = keyData.expiration ? 
+                    new Date(keyData.expiration).toLocaleDateString('pt-BR') : 
+                    'Não expira';
+
+                row.innerHTML = `
+                    <td><strong style="font-family: monospace; font-size: 0.9rem;">${keyData.key}</strong></td>
+                    <td>${keyData.name || 'Sem nome'}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td>${expiresText}</td>
+                    <td>
+                        <div class="key-actions">
+                            <button class="btn btn-small" onclick="copyToClipboard('${keyData.key}')" title="Copiar chave">
+                                📋
+                            </button>
+                            <button class="btn btn-small" onclick="shareKeyDirect('${keyData.key}')" title="Compartilhar">
+                                📤
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+
+            modal.classList.add('active');
+        }
+
+        function closeAllKeysModal() {
+            document.getElementById('all-keys-modal').classList.remove('active');
+        }
+
+        // Atualizar tabela de usuários
+        function updateUsersTable() {
+            const tbody = document.getElementById('users-table');
+            
+            // Filtrar usuários ativos (com uso recente)
+            const activeUsers = keys
+                .filter(k => k.active && k.lastUsed && new Date(k.lastUsed) > new Date(Date.now() - 24 * 60 * 60 * 1000))
+                .slice(0, 10)
+                .map(keyData => ({
+                    user: keyData.lastUser || 'Usuário Anônimo',
+                    key: keyData.key,
+                    lastAccess: keyData.lastUsed,
+                    ip: `192.168.1.${Math.floor(Math.random() * 255)}`,
+                    onlineTime: `${Math.floor(Math.random() * 120)}min`
+                }));
+
+            if (activeUsers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--secondary);">Nenhum usuário online</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = '';
+
+            activeUsers.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${user.user}</td>
+                    <td><strong style="font-family: monospace;">${user.key}</strong></td>
+                    <td>${new Date(user.lastAccess).toLocaleString('pt-BR')}</td>
+                    <td>${user.ip}</td>
+                    <td>${user.onlineTime}</td>
+                    <td>
+                        <button class="btn btn-danger btn-small" onclick="disconnectUser('${user.key}')">
+                            🔌 Desconectar
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            console.log('👥 Tabela de usuários atualizada:', activeUsers.length, 'usuários');
+        }
+
+        // Gerar nova chave
+        function generateKey() {
+            const name = document.getElementById('key-name').value;
+            const type = document.getElementById('key-type').value;
+            const duration = parseInt(document.getElementById('key-duration').value) || 7;
+            const maxUses = parseInt(document.getElementById('key-max-uses').value) || 0;
+
+            // Gerar chave única
+            const key = generateUniqueKey();
+            
+            // Calcular expiração baseada no tipo
+            let expiration = null;
+            let finalDuration = duration;
+            let finalMaxUses = maxUses;
+
+            switch (type) {
+                case 'trial':
+                    finalDuration = 1; // 24 horas
+                    finalMaxUses = 3;
+                    break;
+                case 'vip':
+                    finalDuration = 7; // 7 dias
+                    finalMaxUses = 0; // Ilimitado
+                    break;
+                case 'temporary':
+                    finalDuration = duration;
+                    break;
+                case 'permanent':
+                    finalDuration = 0; // Não expira
+                    break;
+            }
+
+            if (finalDuration > 0) {
+                expiration = new Date(Date.now() + finalDuration * 24 * 60 * 60 * 1000).toISOString();
+            }
+
+            // Criar objeto da chave
+            const keyData = {
+                key: key,
+                name: name || `Chave ${type.charAt(0).toUpperCase() + type.slice(1)}`,
+                created: new Date().toISOString(),
+                expiration: expiration,
+                active: true,
+                uses: 0,
+                maxUses: finalMaxUses,
+                type: type
+            };
+
+            // Adicionar à lista
+            keys.push(keyData);
+            saveKeysToStorage();
+
+            // Mostrar chave gerada
+            const expirationDate = expiration ? new Date(expiration).toLocaleDateString('pt-BR') : 'Não expira';
+            
+            document.getElementById('generated-key-display').textContent = key;
+            document.getElementById('access-link').value = `${window.location.origin.replace('admin', '')}?key=${key}`;
+            
+            // Atualizar instruções
+            const instructions = document.getElementById('client-instructions');
+            instructions.value = instructions.value
+                .replace('[LINK_DO_SISTEMA]', window.location.origin.replace('admin', ''))
+                .replace('[CHAVE_GERADA]', key)
+                .replace('[DATA_EXPIRACAO]', expirationDate);
+            
+            document.getElementById('generated-key-container').style.display = 'block';
+
+            // Atualizar interfaces
+            refreshAllData();
+
+            showAlert('Chave gerada com sucesso!', 'success');
+            console.log('🔑 Nova chave gerada:', key);
+        }
+
+        // Gerar chave única
+        function generateUniqueKey() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let key;
+            
+            do {
+                key = '';
+                // Formato: XXX-XXXXXX-XXXX-XXX
+                for (let i = 0; i < 3; i++) key += chars.charAt(Math.floor(Math.random() * 26));
+                key += '-';
+                for (let i = 0; i < 6; i++) key += chars.charAt(Math.floor(Math.random() * 36));
+                key += '-';
+                for (let i = 0; i < 4; i++) key += chars.charAt(Math.floor(Math.random() * 36));
+                key += '-';
+                for (let i = 0; i < 3; i++) key += chars.charAt(Math.floor(Math.random() * 26));
+            } while (keys.some(k => k.key === key));
+            
+            return key;
+        }
+
+        // Ativar/Desativar chave
+        function toggleKey(key) {
+            const keyData = keys.find(k => k.key === key);
+            if (keyData) {
+                keyData.active = !keyData.active;
+                saveKeysToStorage();
+                refreshAllData();
+                
+                showAlert(`Chave ${keyData.active ? 'ativada' : 'desativada'} com sucesso!`, 'success');
+                console.log(`🔄 Chave ${key} ${keyData.active ? 'ativada' : 'desativada'}`);
+            }
+        }
+
+        // Excluir chave
+        function deleteKey(key) {
+            keys = keys.filter(k => k.key !== key);
+            saveKeysToStorage();
+            refreshAllData();
+            
+            showAlert('Chave excluída com sucesso!', 'success');
+            closeModal();
+            console.log(`🗑 Chave ${key} excluída`);
+        }
+
+        // Filtrar chaves
+        function filterKeys(searchTerm) {
+            const tbody = document.getElementById('keys-table');
+            
+            if (!searchTerm) {
+                updateKeysTable();
+                return;
+            }
+
+            const filteredKeys = keys.filter(keyData => 
+                keyData.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (keyData.name && keyData.name.toLowerCase().includes(searchTerm.toLowerCase()))
+            );
+            
+            if (filteredKeys.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--secondary);">Nenhuma chave encontrada</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = '';
+
+            filteredKeys.forEach(keyData => {
+                const row = document.createElement('tr');
+                
+                const status = getKeyStatus(keyData);
+                const statusClass = `status-${status}`;
+                const statusText = getStatusText(status);
+                
+                const expiresText = keyData.expiration ? 
+                    new Date(keyData.expiration).toLocaleDateString('pt-BR') : 
+                    'Não expira';
+
+                const usesText = `${keyData.uses || 0}${keyData.maxUses ? `/${keyData.maxUses}` : ''}`;
+
+                row.innerHTML = `
+                    <td><strong style="font-family: monospace; font-size: 0.9rem;">${keyData.key}</strong></td>
+                    <td>${keyData.name || 'Sem nome'}</td>
+                    <td>${new Date(keyData.created).toLocaleDateString('pt-BR')}</td>
+                    <td>${expiresText}</td>
+                    <td>${usesText}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td>
+                        <div class="key-actions">
+                            <button class="btn btn-small" onclick="copyToClipboard('${keyData.key}')" title="Copiar chave">
+                                📋
+                            </button>
+                            <button class="btn btn-small" onclick="toggleKey('${keyData.key}')" title="${keyData.active ? 'Desativar' : 'Ativar'}">
+                                ${keyData.active ? '❌' : '✅'}
+                            </button>
+                            <button class="btn btn-small btn-danger" onclick="showDeleteModal('${keyData.key}')" title="Excluir">
+                                🗑
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+
+            console.log(`🔍 Filtro aplicado: "${searchTerm}" - ${filteredKeys.length} chaves encontradas`);
+        }
+
+        // Atualizar opções baseadas no tipo de chave
+        function updateKeyTypeOptions() {
+            const type = document.getElementById('key-type').value;
+            const durationGroup = document.getElementById('duration-group');
+            const durationInput = document.getElementById('key-duration');
+            const maxUsesInput = document.getElementById('key-max-uses');
+
+            switch (type) {
+                case 'trial':
+                    durationGroup.style.display = 'none';
+                    maxUsesInput.value = 3;
+                    maxUsesInput.disabled = true;
+                    break;
+                case 'vip':
+                    durationGroup.style.display = 'block';
+                    durationInput.value = 7;
+                    maxUsesInput.value = 0;
+                    maxUsesInput.disabled = false;
+                    break;
+                case 'permanent':
+                    durationGroup.style.display = 'none';
+                    maxUsesInput.disabled = false;
+                    break;
+                default:
+                    durationGroup.style.display = 'block';
+                    maxUsesInput.disabled = false;
+            }
+        }
+
+        // Utilitários
+        function getKeyStatus(keyData) {
+            if (!keyData.active) return 'inactive';
+            if (keyData.expiration && new Date(keyData.expiration) <= new Date()) return 'expired';
+            if (keyData.maxUses > 0 && (keyData.uses || 0) >= keyData.maxUses) return 'expired';
+            return 'active';
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                active: 'ATIVA',
+                inactive: 'INATIVA',
+                expired: 'EXPIRADA'
+            };
+            return statusMap[status] || 'DESCONHECIDO';
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showAlert('Chave copiada para a área de transferência!', 'success');
+            }).catch(err => {
+                console.error('Erro ao copiar:', err);
+                showAlert('Erro ao copiar a chave!', 'error');
+            });
+        }
+
+        function copyKey() {
+            const key = document.getElementById('generated-key-display').textContent;
+            copyToClipboard(key);
+        }
+
+        function copyLink() {
+            const link = document.getElementById('access-link').value;
+            copyToClipboard(link);
+        }
+
+        function shareKey() {
+            const key = document.getElementById('generated-key-display').textContent;
+            const link = document.getElementById('access-link').value;
+            const instructions = document.getElementById('client-instructions').value;
+            
+            const shareText = `Chave de Acesso: ${key}\nLink: ${link}\n\nInstruções:\n${instructions}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Chave de Acesso - Sistema Starlink',
+                    text: shareText
+                }).then(() => {
+                    showAlert('Chave compartilhada com sucesso!', 'success');
+                }).catch(err => {
+                    console.error('Erro ao compartilhar:', err);
+                    copyToClipboard(shareText);
+                    showAlert('Texto copiado para compartilhamento!', 'success');
+                });
+            } else {
+                copyToClipboard(shareText);
+                showAlert('Texto copiado para compartilhamento!', 'success');
+            }
+        }
+
+        function shareKeyDirect(key) {
+            const keyData = keys.find(k => k.key === key);
+            if (!keyData) return;
+            
+            const link = `${window.location.origin.replace('admin', '')}?key=${key}`;
+            const expiration = keyData.expiration ? new Date(keyData.expiration).toLocaleDateString('pt-BR') : 'Não expira';
+            
+            const shareText = `Chave de Acesso: ${key}\nLink: ${link}\nExpira em: ${expiration}\n\nUse esta chave para acessar o sistema Starlink.`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Chave de Acesso - Sistema Starlink',
+                    text: shareText
+                }).then(() => {
+                    showAlert('Chave compartilhada com sucesso!', 'success');
+                }).catch(err => {
+                    console.error('Erro ao compartilhar:', err);
+                    copyToClipboard(shareText);
+                    showAlert('Chave copiada para compartilhamento!', 'success');
+                });
+            } else {
+                copyToClipboard(shareText);
+                showAlert('Chave copiada para compartilhamento!', 'success');
+            }
+        }
+
+        function sendKeyToClient() {
+            const key = document.getElementById('generated-key-display').textContent;
+            const link = document.getElementById('access-link').value;
+            const instructions = document.getElementById('client-instructions').value;
+            
+            const emailSubject = 'Sua Chave de Acesso - Sistema Starlink';
+            const emailBody = `Olá!\n\nAqui está sua chave de acesso para o sistema Starlink:\n\nChave: ${key}\nLink de acesso: ${link}\n\nInstruções:\n${instructions}\n\nAtenciosamente,\nEquipe IJR.RX`;
+            
+            const mailtoLink = `mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+            
+            window.open(mailtoLink, '_blank');
+            showAlert('Cliente no email aberto para envio!', 'success');
+        }
+
+        function refreshKeys() {
+            loadKeysFromStorage();
+            refreshAllData();
+            showAlert('Dados atualizados com sucesso!', 'success');
+        }
+
+        // Modal functions
+        function showDeleteModal(key) {
+            currentModalAction = 'delete';
+            currentModalData = key;
+            
+            document.getElementById('modal-title').textContent = 'Excluir Chave';
+            document.getElementById('modal-message').textContent = `Tem certeza que deseja excluir a chave "${key}"? Esta ação não pode ser desfeita.`;
+            document.getElementById('modal-confirm-btn').textContent = 'Excluir';
+            
+            document.getElementById('confirm-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('confirm-modal').classList.remove('active');
+            currentModalAction = null;
+            currentModalData = null;
+        }
+
+        // Configurar botão de confirmação do modal
+        document.getElementById('modal-confirm-btn').addEventListener('click', function() {
+            if (currentModalAction === 'delete' && currentModalData) {
+                deleteKey(currentModalData);
+            }
+        });
+
+        // Alert system
+        function showAlert(message, type) {
+            const alertEl = document.getElementById(`alert-${type}`);
+            alertEl.textContent = message;
+            alertEl.style.display = 'block';
+            
+            setTimeout(() => {
+                alertEl.style.display = 'none';
+            }, 5000);
+        }
+
+        // Configurações
+        function loadSettings() {
+            const emergencyKeys = localStorage.getItem('emergencyKeys') || 'STAR-123456-TEST-KEY\nDEV-ACCESS-KEY-2024\nIJR-RX-MASTER-KEY';
+            const autoDelete = localStorage.getItem('autoDelete') || '30';
+            
+            document.getElementById('emergency-keys').value = emergencyKeys;
+            document.getElementById('auto-delete').value = autoDelete;
+        }
+
+        function saveSettings() {
+            const emergencyKeys = document.getElementById('emergency-keys').value;
+            const autoDelete = document.getElementById('auto-delete').value;
+            
+            localStorage.setItem('emergencyKeys', emergencyKeys);
+            localStorage.setItem('autoDelete', autoDelete);
+            
+            showAlert('Configurações salvas com sucesso!', 'success');
+        }
+
+        function resetSystem() {
+            if (confirm('⚠️ ATENÇÃO: Isso irá resetar todo o sistema e excluir todas as chaves. Tem certeza?')) {
+                localStorage.removeItem('starlinkKeys');
+                keys = [];
+                createSampleKeys();
+                
+                loadSettings();
+                refreshAllData();
+                
+                showAlert('Sistema resetado com sucesso!', 'success');
+            }
+        }
+
+        function disconnectUser(key) {
+            const keyData = keys.find(k => k.key === key);
+            if (keyData) {
+                keyData.lastUsed = null;
+                keyData.lastUser = null;
+                saveKeysToStorage();
+                updateUsersTable();
+                showAlert(`Usuário da chave ${key} desconectado!`, 'success');
+            }
+        }
+
+        function goToMainSite() {
+            window.location.href = 'index.html';
+        }
+
+        // Debug functions
+        function toggleDebug() {
+            const debugPanel = document.getElementById('debug-panel');
+            debugPanel.style.display = debugPanel.style.display === 'none' ? 'block' : 'none';
+            updateDebugInfo();
+        }
+
+        function updateDebugInfo() {
+            const debugInfo = document.getElementById('debug-info');
+            debugInfo.innerHTML = `
+                <div>Total de chaves: ${keys.length}</div>
+                <div>Chaves no localStorage: ${localStorage.getItem('starlinkKeys') ? 'Sim' : 'Não'}</div>
+                <div>Última atualização: ${new Date().toLocaleString('pt-BR')}</div>
+                <div>User Agent: ${navigator.userAgent}</div>
+            `;
+        }
+
+        // Exportar/Importar
+        function exportKeys() {
+            const dataStr = JSON.stringify(keys, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `starlink-keys-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            showAlert('Chaves exportadas com sucesso!', 'success');
+        }
+
+        function importKeys() {
+            document.getElementById('import-file').click();
+        }
+
+        document.getElementById('import-file').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedKeys = JSON.parse(e.target.result);
+                        if (Array.isArray(importedKeys)) {
+                            keys = importedKeys;
+                            saveKeysToStorage();
+                            refreshAllData();
+                            showAlert('Chaves importadas com sucesso!', 'success');
+                        } else {
+                            showAlert('Formato de arquivo inválido!', 'error');
+                        }
+                    } catch (error) {
+                        showAlert('Erro ao importar chaves!', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        // Inicializar sistema quando a página carregar
+        document.addEventListener('DOMContentLoaded', initializeAdminSystem);
+    </script>
+</body>
+</html>
